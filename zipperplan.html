@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABI20/21 Zippering Plan — Eagle 5</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+var DB=null,DB_ROOT="zip_abi2021";
+var EN=null,LE=null,LOG=[],ACT=false;
+try{
+ var _c={apiKey:"PASTE_YOUR_API_KEY",authDomain:"PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+ databaseURL:"https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+ projectId:"PASTE_YOUR_PROJECT_ID",storageBucket:"PASTE_YOUR_PROJECT_ID.appspot.com",
+ messagingSenderId:"PASTE_YOUR_SENDER_ID",appId:"PASTE_YOUR_APP_ID"};
+ if(_c.apiKey.indexOf("PASTE")===-1){firebase.initializeApp(_c);DB=firebase.database();}
+}catch(e){console.warn("Firebase:",e.message);}
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f2f0;color:#323c2a;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+header{padding:10px 24px;background:#fff;border-bottom:1px solid #eaeaea;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.ht{font-size:14.5px;font-weight:700;color:#1a1f16;letter-spacing:-.15px;}.hs{font-size:11px;color:#9ea597;margin-top:1px;font-weight:400;letter-spacing:.1px;}
+#dot{width:8px;height:8px;border-radius:50%;background:#ced2cb;flex-shrink:0;transition:background .5s;}
+#dot.on{background:#3B6D11;}#dot.err{background:#A32D2D;}
+.banner.show{display:flex;}
+.abtn:hover{background:#c08828;}
+#name-err{font-size:11px;color:#A32D2D;font-weight:600;display:none;}#legend{display:flex;flex-wrap:wrap;gap:4px 16px;padding:7px 24px;background:#fff;border-bottom:1px solid #eaeaea;}
+.li{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#5f5e5a;}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+#tbar{display:flex;align-items:center;gap:8px;padding:8px 24px;background:#fff;border-bottom:1px solid #eaeaea;flex-wrap:wrap;position:sticky;top:50px;z-index:9;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.tlbl{font-size:9.5px;font-weight:700;color:#9ea597;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap;}
+.ob{padding:4px 12px;border-radius:20px;border:1.5px solid;cursor:pointer;font-size:11px;font-weight:600;background:transparent;font-family:inherit;white-space:nowrap;transition:all .15s;letter-spacing:.1px;}
+.tsep{width:0.5px;height:18px;background:#e8e8e8;margin:0 2px;flex-shrink:0;}
+#sw{position:relative;flex:1;min-width:150px;max-width:240px;}
+#si-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9ea597;line-height:0;}
+#si{width:100%;padding:6px 26px 6px 32px;border:1px solid #e0e0e0;border-radius:20px;background:#f7f8f6;font-size:12px;color:#1a1f16;outline:none;font-family:inherit;transition:all .15s;}
+#si:focus{border-color:#ecac45;background:#fff;box-shadow:0 0 0 3px rgba(236,172,69,.12);}
+#sc{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ea597;font-size:16px;line-height:1;display:none;padding:0;}
+.tbtn{padding:5px 15px;border-radius:20px;border:1px solid #d8d8d4;cursor:pointer;font-size:11.5px;font-weight:600;background:#fff;color:#3a3830;font-family:inherit;white-space:nowrap;transition:all .15s;letter-spacing:.05px;}
+.tbtn:hover{background:#f4f5f1;border-color:#b0aea6;}
+.tbtn.on{background:#323c2a;color:#ceeb13;border-color:#323c2a;font-weight:700;box-shadow:0 1px 4px rgba(50,60,42,.25);}
+#srp{background:#fff;border-bottom:1px solid #eaeaea;max-height:0;overflow:hidden;transition:max-height .22s cubic-bezier(.4,0,.2,1);}
+#srp.open{max-height:240px;overflow-y:auto;}
+.sri{padding:10px 20px;}.sr-hd{font-size:11px;font-weight:700;color:#a3a3a3;margin-bottom:8px;letter-spacing:.3px;}
+.sr-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:0.5px solid #e8e8e8;cursor:pointer;}
+.sr-row:last-child{border-bottom:none;}.sr-row:hover{opacity:.7;}
+.sr-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.sr-nil{font-size:12px;color:#a3a3a3;font-style:italic;}
+#main{flex:1;display:flex;flex-direction:column;align-items:center;padding:24px 20px 40px;gap:0;}
+#mapv{width:100%;max-width:820px;background:#fff;border-radius:20px;border:1px solid #e8e8e4;padding:8px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08),0 1px 6px rgba(0,0,0,.04);}
+#mapv svg{display:block;width:100%;}
+.rg{cursor:pointer;}.rg:hover .rlb{fill:#0f0f0e !important;}
+#panel-wrap{width:100%;max-width:820px;}
+#panel{display:none;background:#fff;border:1px solid #e8e8e4;border-radius:20px;padding:22px 24px;margin-top:14px;box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 6px rgba(0,0,0,.04);}
+.ptitle{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f0ec;flex-wrap:wrap;letter-spacing:-.1px;}
+.ptdot{width:10px;height:10px;border-radius:3px;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.7) inset;}.ptcl{font-weight:500;color:#b0aea6;font-size:12px;}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.cc{position:relative;background:#fafafa;border:1px solid #ebebeb;border-left:3px solid transparent;border-radius:10px;padding:11px 13px;transition:all .18s;}
+.cc:not(.dim):hover{background:#f4f5f0;box-shadow:0 2px 8px rgba(0,0,0,.06);transform:translateY(-1px);}.cc.dim{opacity:.22;}
+.cc-org{font-size:9.5px;font-weight:800;margin-bottom:5px;letter-spacing:.6px;text-transform:uppercase;opacity:.85;}
+.cc-val{font-size:11.5px;color:#2a2e22;line-height:1.5;font-weight:400;}
+.cc-clr:hover{color:#A32D2D;}
+.cc-ta:focus{border-color:#ecac45;}
+/* Pairings */
+.pair-sect{margin-top:18px;padding-top:16px;border-top:1px solid #f0f0ec;}
+.pair-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.pair-hdr-lbl{font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.6px;text-transform:uppercase;}
+.pair-add-btn:hover{background:#ecac45;color:#fff;}
+.pview-tabs{display:flex;gap:4px;}
+.pvtab{padding:2px 10px;border-radius:10px;border:1px solid #e8e8e8;background:transparent;font-size:10.5px;font-weight:600;cursor:pointer;color:#a3a3a3;font-family:inherit;}
+.pvtab.on{background:#323c2a;color:#fff;border-color:#323c2a;}
+.pg{background:#fff;border:1px solid #ebebeb;border-radius:12px;padding:13px 15px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.pg:last-child{margin-bottom:0;}
+.pg-hdr{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;}
+.pg-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:#323c2a;color:#ceeb13;box-shadow:0 1px 4px rgba(50,60,42,.3);}
+.pg-name{font-size:13px;font-weight:700;color:#1a1f16;letter-spacing:-.1px;}
+.pg-title{font-size:10.5px;font-weight:600;color:#a3a3a3;}
+.pg-scope{font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;background:#e8e8e8;color:#6a5a20;letter-spacing:.3px;}
+.pg-card-btn{padding:2px 9px;border-radius:6px;border:0.5px solid #d1d1d1;background:transparent;font-size:10.5px;cursor:pointer;color:#6a6860;font-family:inherit;margin-left:auto;white-space:nowrap;transition:all .12s;}
+.pg-card-btn:hover{background:#323c2a;color:#fff;border-color:#323c2a;}
+.pt-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;flex-shrink:0;}
+.pt-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.pg-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid #eceae2;flex-wrap:wrap;}
+.pg-row:last-child{border-bottom:none;}
+.pr-role{padding:1px 8px;border-radius:10px;border:1px solid;font-size:10.5px;font-weight:600;cursor:pointer;background:transparent;font-family:inherit;margin-left:2px;}
+.pr-role:hover{opacity:.7;}
+.pr-del:hover{color:#A32D2D;}
+.pair-nil{font-size:11.5px;color:#b4b2a9;font-style:italic;padding:4px 0;}
+.pair-form{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:9px;background:#ffffff;border-radius:7px;margin-top:8px;border:0.5px solid #e8e8e8;}
+.pair-form-lbl{font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.4px;text-transform:uppercase;width:100%;margin-bottom:2px;}
+.pinp{padding:4px 9px;border-radius:6px;border:0.5px solid #d1d1d1;background:#fff;font-size:11.5px;outline:none;font-family:inherit;flex:1;min-width:80px;color:#323c2a;}
+.pinp:focus{border-color:#ecac45;}
+.psel{padding:4px 7px;border-radius:6px;border:0.5px solid #d1d1d1;background:#fff;font-size:11.5px;outline:none;font-family:inherit;cursor:pointer;color:#323c2a;}
+.psave{padding:4px 13px;border-radius:6px;border:none;background:#ecac45;font-size:11px;cursor:pointer;color:#fff;font-family:inherit;font-weight:600;}
+.psave:hover{background:#c08828;}
+.pcancel{padding:4px 10px;border-radius:6px;border:0.5px solid #d1d1d1;background:transparent;font-size:11px;cursor:pointer;color:#6a6860;font-family:inherit;}
+.pt-legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;padding-top:10px;border-top:0.5px solid #e8e8e8;}
+/* Matrix */
+.pair-matrix{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;}
+.pair-matrix th{padding:7px 10px;text-align:left;font-size:9.5px;font-weight:700;color:#a3a3a3;letter-spacing:.4px;text-transform:uppercase;border-bottom:1.5px solid #e8e8e8;background:#ffffff;white-space:nowrap;}
+.pair-matrix td{padding:8px 10px;border-bottom:0.5px solid #e8e8e8;vertical-align:top;}
+.pair-matrix tr:last-child td{border-bottom:none;}
+.pair-matrix tr:hover td{background:#f8f7f3;}
+.pm-person{font-weight:700;color:#0f0f0e;font-size:12px;white-space:nowrap;}
+.pm-title{font-size:10px;color:#a3a3a3;margin-top:1px;}
+.pm-cell{display:flex;flex-direction:column;gap:3px;}
+.pm-entry{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.pm-name{font-size:11px;color:#323c2a;font-weight:500;}
+.pm-nil{color:#d1d1d1;font-size:11px;}
+/* Activity */
+#act-wrap{width:100%;max-width:800px;margin-top:12px;display:none;}
+#act-wrap.show{display:block;}
+#act-inner{background:#fff;border:0.5px solid #e8e8e8;border-radius:12px;overflow:hidden;}
+.act-hdr{padding:10px 20px;display:flex;align-items:center;background:#ffffff;border-bottom:0.5px solid #e8e8e8;}
+.act-title{font-size:12px;font-weight:600;color:#323c2a;display:flex;align-items:center;gap:6px;}
+.act-badge{background:#fff9ef;color:#6b4c1a;border-radius:10px;padding:1px 8px;font-size:10px;}
+.act-list{max-height:280px;overflow-y:auto;}
+.ae{display:flex;gap:10px;padding:10px 20px;border-bottom:0.5px solid #e8e8e8;}
+.ae:last-child{border-bottom:none;}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.ae-bd{flex:1;min-width:0;}
+.ae-top{font-size:12px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;line-height:1.5;}
+.ae-val{font-size:11px;color:#6a6860;margin-top:2px;}
+.ae-nil{padding:14px 20px;font-size:11.5px;color:#a3a3a3;font-style:italic;}
+.hint{font-size:11px;color:#ced2cb;text-align:center;margin-top:10px;}
+mark{background:#fde68a;border-radius:2px;padding:0 2px;}
+/* Who Am I */
+.wa-tab.on{background:#323c2a;color:#fff;border-color:#323c2a;}
+.wa-role-row,.ts-role-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 0;border-bottom:0.5px solid #f1f5f8;}
+.wa-role-row:last-child,.ts-role-row:last-child{border-bottom:none;}
+.wa-chip.sm{font-size:10px;padding:1px 8px;}
+.wa-pair-row,.ts-pair-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0;border-bottom:0.5px solid #f1f5f8;}
+.wa-pair-row:last-child,.ts-pair-row:last-child{border-bottom:none;}
+.wa-ctx,.ts-ctx{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.ts-section{margin-bottom:14px;}
+.ts-hdr{font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+/* Gap Detector */
+
+
+
+
+/* ── Scenarios ───────────────────────────────────────────── */
+#scen-bar{background:#fff;border-bottom:0.5px solid #e8e8e8;max-height:0;overflow:hidden;transition:max-height .4s ease;}
+#scen-bar.open{max-height:1100px;overflow-y:auto;}
+.scen-wrap{padding:14px 20px 18px;}
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:7px;margin-bottom:14px;}
+.scen-card{padding:10px 12px;border-radius:9px;border:1.5px solid #e8e8e8;cursor:pointer;transition:all .14s;background:#ffffff;user-select:none;}
+.scen-card:hover{border-color:#ecac45;background:#fff9ef;}
+.scen-card.on{border-color:#ecac45;background:#fff9ef;box-shadow:0 0 0 1px #ecac4530;}
+.scen-icon{font-size:17px;margin-bottom:5px;line-height:1;}
+.scen-name{font-size:11.5px;font-weight:600;color:#323c2a;line-height:1.4;}
+.scen-urg{display:inline-block;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:.5px;margin-top:5px;}
+.scen-detail{background:#ffffff;border:0.5px solid #e8e8e8;border-radius:10px;padding:14px 16px;margin-top:4px;}
+.scen-dtitle{font-size:14px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.scen-note{font-size:11.5px;color:#6b7a5f;margin-bottom:12px;padding:7px 11px;background:#fff;border-radius:6px;border-left:2.5px solid #d1d1d1;line-height:1.5;}
+.scen-role-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;flex-wrap:wrap;}
+.scen-role-row:last-child{border-bottom:none;}
+.scen-step{width:20px;height:20px;min-width:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px;}
+.scen-contacts{flex:1;min-width:0;}
+.scen-ct-row{font-size:11.5px;color:#323c2a;margin-bottom:2px;display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;}
+.scen-ct-org{font-size:9.5px;font-weight:700;flex-shrink:0;}
+#scen-btn{border:1.5px solid #ecac45;color:#ecac45;background:transparent;font-weight:600;}
+#scen-btn:hover{background:#fff9ef;border-color:#bd8a37;color:#bd8a37;}
+#scen-btn.on{background:#323c2a;color:#ceeb13;border-color:#323c2a;font-weight:700;}
+
+/* ── Escalation Chain ────────────────────────────────────── */
+.esc-chain{margin-top:12px;padding-top:10px;border-top:0.5px solid #e8e8e8;}
+.esc-label{font-size:9px;font-weight:700;color:#a3a3a3;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+.esc-nodes{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.esc-card{padding:6px 11px;border-radius:8px;background:#ffffff;border:0.5px solid #e8e8e8;text-align:center;min-width:90px;}
+.esc-name{font-size:11.5px;font-weight:700;color:#323c2a;}
+.esc-title{font-size:9.5px;color:#a3a3a3;margin-top:1px;}
+.esc-arrow{font-size:13px;color:#ced2cb;flex-shrink:0;padding:0 1px;}
+/* ── New Hire Wizard ─────────────────────────────────────── */
+#wiz-overlay{position:fixed;inset:0;background:rgba(15,15,14,.65);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+#wiz-overlay.open{display:flex;}
+.wiz-card{background:#fff;border-radius:16px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;}
+.wiz-hdr{padding:20px 24px 16px;background:linear-gradient(135deg,#323c2a 0%,#1e2418 100%);}
+.wiz-htitle{font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
+.wiz-hsub{font-size:11.5px;color:#9ea597;margin-top:4px;}
+.wiz-steps{display:flex;gap:5px;margin-top:12px;}
+.wiz-step{height:3px;flex:1;border-radius:2px;background:#3a3835;transition:background .2s;}
+.wiz-step.on{background:#ecac45;}
+.wiz-body{padding:22px 24px;}
+.wiz-q{font-size:14px;font-weight:600;color:#323c2a;margin-bottom:14px;line-height:1.4;}
+.wiz-inp{width:100%;padding:10px 14px;border:1.5px solid #d1d1d1;border-radius:10px;font-size:14px;outline:none;font-family:inherit;color:#323c2a;background:#ffffff;}
+.wiz-inp:focus{border-color:#ecac45;background:#fff;box-shadow:0 0 0 3px rgba(236,172,69,.12);}
+.wiz-opts{display:flex;flex-direction:column;gap:7px;}
+.wiz-opt{padding:10px 14px;border-radius:10px;border:1.5px solid #e8e8e8;cursor:pointer;font-size:13px;font-weight:500;color:#323c2a;background:#ffffff;transition:all .12s;text-align:left;font-family:inherit;display:flex;align-items:center;gap:8px;}
+.wiz-opt:hover{border-color:#ecac45;background:#fff9ef;}
+.wiz-opt.on{border-color:#ecac45;background:#fff9ef;font-weight:600;}
+.wiz-foot{padding:12px 24px;border-top:0.5px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;}
+.wiz-btn-next{padding:8px 22px;border-radius:10px;border:none;background:#ecac45;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.wiz-btn-next:hover{background:#c08828;}
+.wiz-btn-back{padding:8px 16px;border-radius:10px;border:0.5px solid #d1d1d1;background:transparent;color:#9ea597;font-size:13px;cursor:pointer;font-family:inherit;}
+.wiz-result-banner{padding:20px 24px;background:linear-gradient(135deg,#323c2a,#1e2418);color:#fff;}
+.wiz-welcome{font-size:18px;font-weight:700;}
+.wiz-role-pill{display:inline-block;margin-top:6px;padding:3px 11px;border-radius:10px;background:rgba(236,172,69,.35);color:#ceeb13;font-size:11px;font-weight:700;}
+.wiz-rsect{padding:14px 24px;border-bottom:0.5px solid #e8e8e8;}
+.wiz-rsect-hdr{font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;}
+.wiz-contact-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f1f5f8;flex-wrap:wrap;}
+.wiz-contact-row:last-child{border-bottom:none;}
+.wiz-scen-list{display:flex;flex-direction:column;gap:6px;}
+.wiz-scen-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid #e8e8e8;background:#ffffff;cursor:pointer;transition:all .13s;}
+.wiz-scen-item:hover{border-color:#ecac45;background:#fff9ef;transform:translateX(2px);}
+.wiz-si-left{display:flex;align-items:flex-start;gap:9px;flex:1;min-width:0;}
+.wiz-si-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.wiz-si-name{font-size:12px;font-weight:600;color:#323c2a;line-height:1.3;}
+.wiz-si-esc{font-size:10.5px;color:#9ea597;margin-top:2px;}
+.wiz-si-urg{font-size:9px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:8px;flex-shrink:0;white-space:nowrap;}
+.wiz-print{display:block;width:100%;padding:12px;background:#323c2a;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s;}
+.wiz-print:hover{background:#ecac45;}
+#wiz-btn{padding:5px 14px;border-radius:6px;border:1.5px solid #323c2a;background:#323c2a;color:#ceeb13;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;letter-spacing:.1px;}
+#wiz-btn:hover{background:#1e2418;border-color:#1e2418;}
+
+
+
+/* ── Edit & Activity ─────────────────────────────────── */
+#edit-btn{border:1.5px solid #547796;color:#547796;}
+#edit-btn:hover{background:#dde5ed;}
+#edit-btn.on{background:#547796;color:#fff;border-color:#547796;font-weight:700;}
+#act-btn{border:1.5px solid #6b7a5f;color:#6b7a5f;}
+#act-btn:hover{background:#ecf0e9;}
+#act-btn.on{background:#6b7a5f;color:#fff;border-color:#6b7a5f;font-weight:700;}
+#act-count{background:#ecf0e9;color:#3a4530;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;}
+.banner{padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;border-bottom:0.5px solid #e8e8e8;}
+#name-bar{background:#fff9ef;}
+#edit-bar{background:#ecf0e9;}
+.bnote{color:#5a5856;font-weight:500;}
+.name-inp{padding:4px 10px;border:1px solid #d1d1d1;border-radius:6px;font-size:12px;outline:none;font-family:inherit;width:180px;}
+.name-inp.err{border-color:#A32D2D;}
+#name-err{font-size:11px;color:#A32D2D;display:none;}
+#name-err.show{display:block;}
+.obtn{padding:4px 12px;border-radius:6px;background:#323c2a;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.obtn:hover{background:#1e2418;}
+.abtn{padding:4px 12px;border-radius:6px;background:#ecac45;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.abtn:hover{background:#c08828;}
+.lastedit{padding:5px 20px;font-size:10.5px;color:#9ea597;border-bottom:0.5px solid #e8e8e8;background:#fafafa;}
+#act-wrap{position:fixed;right:0;top:105px;width:300px;background:#fff;border-left:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;border-radius:0 0 0 12px;box-shadow:-4px 4px 20px rgba(0,0,0,.08);z-index:20;max-height:70vh;overflow-y:auto;display:none;}
+#act-wrap.show{display:block;}
+.act-log{padding:12px;}
+.al-row{padding:8px 0;border-bottom:0.5px solid #f1f5f8;font-size:11.5px;}
+.al-row:last-child{border-bottom:none;}
+.al-badge{display:inline-block;padding:1px 7px;border-radius:8px;font-size:9.5px;font-weight:700;background:#ecf0e9;color:#3a4530;margin-right:5px;}
+.al-who{font-weight:600;color:#323c2a;}
+.al-time{font-size:10px;color:#9ea597;margin-top:2px;}
+.cc-ta{width:100%;padding:5px 8px;border:1px solid #d1d1d1;border-radius:5px;font-size:12px;font-family:inherit;resize:vertical;min-height:40px;outline:none;transition:border-color .12s;}
+.cc-ta:focus{border-color:#ecac45;}
+.cc-clr{padding:3px 8px;border-radius:5px;background:#f1f5f8;border:1px solid #d1d1d1;font-size:11px;cursor:pointer;font-family:inherit;color:#6b7a5f;}
+.cc-clr:hover{background:#dde5ed;}
+.pair-add-btn{padding:5px 12px;border-radius:6px;border:1.5px dashed #ced2cb;background:transparent;font-size:11.5px;color:#9ea597;cursor:pointer;font-family:inherit;margin-top:8px;width:100%;transition:all .12s;}
+.pair-add-btn:hover{border-color:#ecac45;color:#ecac45;background:#fff9ef;}
+.pr-del{padding:1px 6px;border-radius:4px;background:transparent;border:1px solid #ced2cb;font-size:11px;color:#9ea597;cursor:pointer;margin-left:6px;flex-shrink:0;}
+.pr-del:hover{background:#FBF0EC;border-color:#A32D2D;color:#A32D2D;}
+
+/* ── Custom scrollbar ──────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#ced2cb;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:#9ea597;}
+
+/* ── Top accent strip ──────────────────────────── */
+body::before{content:'';display:block;height:3px;background:linear-gradient(90deg,#323c2a 0%,#ecac45 50%,#ceeb13 100%);position:fixed;top:0;left:0;right:0;z-index:100;}
+header{margin-top:3px;}
+
+/* ── Frosted glass toolbar ─────────────────────── */
+#tbar{background:rgba(255,255,255,.88) !important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+
+/* ── Panel slide-in animation ──────────────────── */
+@keyframes panelIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+#panel{animation:panelIn .2s cubic-bezier(.4,0,.2,1);}
+
+/* ── Card hover lift ────────────────────────────── */
+.pg{transition:box-shadow .18s,transform .18s;}
+.pg:hover{box-shadow:0 4px 16px rgba(0,0,0,.09);transform:translateY(-1px);}
+
+/* ── Selected node glow ─────────────────────────── */
+@keyframes nodePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.sel-ring{animation:nodePulse 2s ease-in-out infinite;}
+
+/* ── Toast notification ─────────────────────────── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#323c2a;color:#ceeb13;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:none;box-shadow:0 4px 16px rgba(50,60,42,.3);letter-spacing:.2px;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── Keyboard shortcut badge ────────────────────── */
+.kbd{display:inline-block;padding:1px 6px;border-radius:4px;background:#f0f0ec;border:1px solid #ddddd8;font-size:10px;font-weight:600;color:#6b7a5f;font-family:'Inter',monospace;line-height:1.6;}
+
+/* ── Empty state ────────────────────────────────── */
+#empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;color:#9ea597;}
+#empty-state .es-icon{font-size:48px;margin-bottom:16px;opacity:.4;}
+#empty-state .es-title{font-size:15px;font-weight:700;color:#6b7a5f;margin-bottom:6px;}
+#empty-state .es-sub{font-size:12.5px;line-height:1.6;max-width:280px;opacity:.8;}
+#empty-state .es-keys{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+
+/* ── Scenario urgency strips ────────────────────── */
+.scen-item-imm{border-left:3px solid #A32D2D !important;}
+.scen-item-smd{border-left:3px solid #ecac45 !important;}
+.scen-item-rtn{border-left:3px solid #6b7a5f !important;}
+
+/* ── Activity log timeline ──────────────────────── */
+.al-row{position:relative;padding-left:20px !important;}
+.al-row::before{content:'';position:absolute;left:7px;top:14px;bottom:-4px;width:1px;background:#f0f0ec;}
+.al-row:last-child::before{display:none;}
+.al-dot{width:8px;height:8px;border-radius:50%;background:#ecac45;border:2px solid #fff;box-shadow:0 0 0 2px #ecac45;position:absolute;left:3px;top:10px;}
+
+/* ── Section labels ──────────────────────────────── */
+.sect-label{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#b0aea6;padding:0 2px;margin-bottom:6px;display:block;}
+
+/* ── Wiz step dots ───────────────────────────────── */
+.wiz-step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+.wiz-dot{width:6px;height:6px;border-radius:50%;background:#e8e8e4;transition:all .2s;}
+.wiz-dot.active{background:#323c2a;width:18px;border-radius:3px;}
+.wiz-dot.done{background:#ceeb13;}
+
+/* ── Hover tooltips ──────────────────────────────── */
+[data-tip]{position:relative;}
+[data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a1f16;color:#fff;font-size:11px;padding:5px 12px;border-radius:7px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s;z-index:999;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+[data-tip]::before{content:'';position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#1a1f16;pointer-events:none;opacity:0;transition:opacity .18s;z-index:999;}
+[data-tip]:hover::after,[data-tip]:hover::before{opacity:1;}
+
+/* ── Improved scen-bar ───────────────────────────── */
+#scen-bar{border-left:none !important;box-shadow:-4px 0 24px rgba(0,0,0,.1),0 4px 24px rgba(0,0,0,.08) !important;}
+
+/* ── Improved wiz overlay ────────────────────────── */
+#wiz-overlay{backdrop-filter:blur(4px) !important;-webkit-backdrop-filter:blur(4px) !important;}
+#wiz-card{box-shadow:0 20px 60px rgba(0,0,0,.2),0 4px 20px rgba(0,0,0,.1) !important;border-radius:20px !important;}
+
+/* ── Pairing badge refinement ────────────────────── */
+.pt-badge{border-radius:6px !important;font-weight:700;letter-spacing:.4px;}
+
+/* ── Scroll shadow on panel ──────────────────────── */
+.cg{position:relative;}
+
+/* ── Footer ──────────────────────────────────────── */
+
+
+
+
+
+#eagle5-badge{display:block;width:120px;height:120px;border-radius:50%;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.1);opacity:.96;margin:26px auto 10px;}
+#eagle5-badge img{width:100%;height:100%;object-fit:cover;}
+
+/* ── Keyboard help modal ───────────────────────── */
+#help-modal{position:fixed;inset:0;background:rgba(26,31,22,.55);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;}
+#help-modal.open{display:flex;}
+#help-card{background:#fff;border-radius:20px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+#help-card h2{font-size:16px;font-weight:700;color:#1a1f16;margin-bottom:18px;letter-spacing:-.2px;}
+.hk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;}
+.hk-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#5a5856;}
+.hk-keys{display:flex;gap:4px;flex-shrink:0;}
+.hk-key{display:inline-block;padding:2px 8px;border-radius:5px;background:#f4f5f1;border:1px solid #ddddd8;font-size:11px;font-weight:600;color:#3a3830;font-family:'Inter',monospace;white-space:nowrap;}
+#help-close{margin-top:20px;width:100%;padding:9px;border-radius:10px;background:#323c2a;color:#ceeb13;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+
+
+/* ── Copy flash ────────────────────────────────── */
+@keyframes copyFlash{0%{background:rgba(206,235,19,.3);}100%{background:transparent;}}
+.cc.copied{animation:copyFlash .6s ease;}
+
+
+/* ── Help button in toolbar ────────────────────── */
+
+</style>
+</head>
+<body>
+
+<header>
+ <div style="display:flex;align-items:center;gap:14px;">
+  
+  <div><div class="ht">ABI20/21 — Zippering Plan</div><div class="hs">Eagle 5 · ABI20, ABI21 · Abilene, TX</div></div>
+ </div>
+ </div>
+ <div style="display:flex;align-items:center;gap:10px;">
+ <button id="act-btn" class="tbtn" data-tip="View edit history">Activity <span id="act-count"></span></button>
+ <button id="edit-btn" class="tbtn" data-tip="Ctrl+E to toggle">Edit</button>
+ <div class="tsep"></div>
+ <button id="help-btn" class="tbtn" data-tip="View all keyboard shortcuts">⌨ Shortcuts</button>
+ <div class="tsep"></div>
+ <button id="wiz-btn" data-tip="Onboarding guide">New to Eagle 5?</button>
+ <div id="dot" title="Connecting…"></div>
+ </div>
+</header>
+</div>
+<div id="legend"></div>
+<div id="tbar">
+ <span class="tlbl">Org</span>
+ <div id="org-f" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+ <div class="tsep"></div>
+ <div id="sw">
+ <span id="si-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+ <input id="si" type="text" placeholder="Search contacts…" autocomplete="off">
+ <button id="sc">×</button>
+ </div>
+ <div class="tsep"></div>
+
+ <button id="scen-btn" class="tbtn">Scenarios</button>
+</div>
+<div id="wiz-overlay"><div class="wiz-card" id="wiz-card"></div></div>
+<div id="scen-bar"></div> </div>
+</div>
+<div class="banner" id="name-bar" style="display:none;">
+ <span class="bnote">Enter your name to track your edits</span>
+ <input id="name-inp" class="name-inp" type="text" placeholder="Your full name" autocomplete="off">
+ <button class="obtn" id="name-ok">Continue</button>
+ <button class="cc-clr" id="name-cancel" style="margin-left:4px;">Cancel</button>
+ <span id="name-err">Please enter your name.</span>
+</div>
+<div class="banner" id="edit-bar" style="display:none;">
+ <span class="bnote">Edit mode — click any contact field to update it</span>
+ <button class="abtn" id="done-btn">✕ Cancel Edit</button>
+</div>
+<div class="lastedit" id="lastedit" style="display:none;"></div>
+<div id="act-wrap"><div class="act-log" id="act-log"><div style="padding:20px;text-align:center;color:#9ea597;font-size:12px;">No activity yet.</div></div></div>
+<div id="srp"></div>
+<div id="main">
+ <div id="mapv">
+ <svg id="zmap" viewBox="-20 0 800 680" role="img" aria-label="ABI20/21 Eagle 5 zippering plan"></svg>
+ <div class="hint" style="padding:5px 0 3px;">
+ Click role · cluster badge · center to reset &nbsp;|&nbsp;
+ <kbd style="font-family:inherit;background:#f5f3ed;border:0.5px solid #d1d1d1;border-radius:4px;padding:1px 5px;font-size:10px;">←→</kbd> roles &nbsp;
+ <kbd style="font-family:inherit;background:#f5f3ed;border:0.5px solid #d1d1d1;border-radius:4px;padding:1px 5px;font-size:10px;">↑↓</kbd> clusters &nbsp;
+ <kbd style="font-family:inherit;background:#f5f3ed;border:0.5px solid #d1d1d1;border-radius:4px;padding:1px 5px;font-size:10px;">/</kbd> search &nbsp;
+ <kbd style="font-family:inherit;background:#f5f3ed;border:0.5px solid #d1d1d1;border-radius:4px;padding:1px 5px;font-size:10px;">Esc</kbd> reset
+ </div>
+  </div>
+ <div id="panel-wrap">
+ <div id="panel">
+  <div id="empty-state">
+   <div class="es-icon">🗺</div>
+   <div class="es-title">Select a role to explore</div>
+   <div class="es-sub">Click any node on the map to see contacts, pairings, and escalation paths.</div>
+   <div class="es-keys">
+    <span><span class="kbd">←</span><span class="kbd">→</span> browse</span>
+    <span><span class="kbd">F</span> search</span>
+    <span><span class="kbd">?</span> shortcuts</span>
+   </div>
+  </div>
+ <div class="ptitle" id="ptitle"></div>
+ <div class="cg" id="cards"></div>
+ </div>
+ <div class="hint">Click any role node to view contacts and pairings</div>
+ </div>
+ </div>
+</div>
+<script>
+
+var CX=400,CY=345,CENR=48,CLUR=150,ROLR=275,GAP=12,START=-75.714;
+var CL=[
+ {id:0,name:'Project leadership', sh:'Leadership', hx:'#323c2a',fhx:'#ecf0e9',txhx:'#1e2418',sw:86},
+ {id:1,name:'Engineering & design',sh:'Engineering', hx:'#547796',fhx:'#dde5ed',txhx:'#2a3d4e',sw:90},
+ {id:2,name:'Construction mgmt', sh:'Construction',hx:'#6b7a5f',fhx:'#ecf0e9',txhx:'#3a4530',sw:96},
+ {id:3,name:'Systems & infra', sh:'Systems', hx:'#ecac45',fhx:'#fff9ef',txhx:'#6b4c1a',sw:72},
+ {id:4,name:'Support functions', sh:'Support', hx:'#9ea597',fhx:'#f1f5f8',txhx:'#4a5245',sw:72},
+];
+var OR=[
+ {k:'Crusoe',l:'Crusoe', hx:'#bd8a37',lx:'#fff9ef'},
+ {k:'DPR', l:'DPR-PCL', hx:'#547796',lx:'#dde5ed'},
+ {k:'MS', l:'Microsoft', hx:'#323c2a',lx:'#ecf0e9'},
+ {k:'SL', l:'Southland', hx:'#9ea597',lx:'#ecf0e9'},
+ {k:'REI', l:'REI', hx:'#779ab6',lx:'#f1f5f8'},
+ {k:'AT', l:'AlphaTech', hx:'#a3a3a3',lx:'#e8e8e8'},
+ {k:'RSN', l:'Rosendin', hx:'#6b7a5f',lx:'#ecf0e9'},
+];
+var PT={
+ OVR: {lbl:'Overview', bg:'#dde5ed',tx:'#2a3d4e',dot:'#547796'},
+ MEP: {lbl:'MEP', bg:'#FEF0E6',tx:'#6b4c1a',dot:'#D06820'},
+ CSA: {lbl:'CSA', bg:'#ecf0e9',tx:'#3a4530',dot:'#6b7a5f'},
+ CX: {lbl:'CX', bg:'#f1f5f8',tx:'#2a3d4e',dot:'#547796'},
+ QC: {lbl:'QC', bg:'#ecf0e9',tx:'#3a4530',dot:'#6b7a5f'},
+ SCHED:{lbl:'Schedule', bg:'#ecf0e9',tx:'#3a4530',dot:'#6b7a5f'},
+ COST: {lbl:'Cost', bg:'#fff9ef',tx:'#6b4c1a',dot:'#bd8a37'},
+ ENV: {lbl:'Environmental',bg:'#ecf0e9',tx:'#3a4530',dot:'#6b7a5f'},
+ SUST: {lbl:'Sustainability',bg:'#ecf0e9',tx:'#0a4a2a',dot:'#1A8050'},
+ PROC: {lbl:'Procurement', bg:'#f1f5f8',tx:'#4a5245',dot:'#9ea597'},
+ OFCI_T:{lbl:'OFCI', bg:'#fff9ef',tx:'#6b4c1a',dot:'#bd8a37'},
+ DESGN:{lbl:'Design', bg:'#dde5ed',tx:'#2a3d4e',dot:'#547796'},
+ SUBM: {lbl:'Submittals',bg:'#F5F0E8',tx:'#5A3A1A',dot:'#8B5E2E'},
+ B9_ACD: {lbl:'B9 — Area A/D/Cups', bg:'#ecf0e9',tx:'#1e2418',dot:'#323c2a'},
+ B9_BC:  {lbl:'B9 — Area B/C/Cups', bg:'#ecf0e9',tx:'#1e2418',dot:'#323c2a'},
+ B9_EF:  {lbl:'B9 — Area E/F',      bg:'#ecf0e9',tx:'#1e2418',dot:'#323c2a'},
+ B10_ACD:{lbl:'B10 — Area A/D/Cups',bg:'#dde5ed',tx:'#2a3d4e',dot:'#547796'},
+ B10_BC: {lbl:'B10 — Area B/C/Cups',bg:'#dde5ed',tx:'#2a3d4e',dot:'#547796'},
+ B10_EF: {lbl:'B10 — Area E/F',     bg:'#dde5ed',tx:'#2a3d4e',dot:'#547796'},
+ SRPM:   {lbl:'B9/10 Sr PM',            bg:'#fff9ef',tx:'#6b4c1a',dot:'#bd8a37'},
+};
+
+var RL=[
+ {n:'Development', c:0, o:{Crusoe:'Evan Schwimmer, Allie Stein',DPR:'John Arcello',MS:'Dillon Isaacs, Maria Diaz',SL:'Brian Walsh',REI:'John Messick'}},
+ {n:'Precon manager', c:0, o:{Crusoe:'Mark Miller',DPR:'Caroline Schopp, Adrian Ayala',MS:'Muhammad Ahmad, Leslie Nichols-Rage',SL:'Michael Kimmel',REI:'Brett Strohlein'}},
+ {n:'PX', c:0,o:{Crusoe:'Neil Brown',DPR:'Nick Sultenfuss, Todd Whitehouse',MS:'Shaminder Banga, Hank Nacey, Greg Roberts, Matthew Knapp, Muhammad Ahmad, Joseph Kocienda',SL:'Matt Tieken',REI:'Jayson Nelson'},pairings:[
+ {person:'Neil Brown',ptitle:'PX',scope:'Power Delivery',type:'OVR', a:'Neil Brown',aOrg:'Crusoe',b:'Michael McSchaefer, Dan Mercier',bOrg:'Crusoe',bRole:'Power delivery'},
+ ]},
+ {n:'Design lead', c:1, o:{Crusoe:'Ross Remesz',DPR:'Evan Winkler',MS:'Inna Tasmaly, Ashley Montufar',SL:'Thomas Cochran',REI:'Chris Drusch',AT:'Kate Gale'}},
+ {n:'Controls/SI',c:1,o:{Crusoe:'Adam Welles, Brett Hoggatt',DPR:'Kyle Alexander, Joe Arismendez',MS:'Klara Mekhael, Brandon Ferrier',SL:'Joe Spry',REI:'Chen Xing'}},
+ {n:'Commissioning', c:1, o:{Crusoe:'Zack Pearson, Jose Fernandez Felgueroso',DPR:'Karina Hanyzewski, Joe Arismendez',MS:'Inna Tasmaly, Ashley Montufar',SL:'Matthew Weston, Colten Hoehns',REI:'Jon Engle'}},
+ {n:'CM team',c:2,o:{Crusoe:'Wayne Pykonen, Tom Pykonen, Hemanth Yerra, Abhi Tomar, Jake Howell, Tarun Alluri, Tyler Simpson',DPR:'Pete Stamos',MS:'Emilio Guzman',SL:'Travis Phillips',REI:'N/A'},pairings:[
+ {person:'Tom Pykonen',ptitle:'CM',scope:'CSA', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Dane Armand, Jake Howell, Tarun Alluri',bOrg:'Crusoe',bRole:'CSA team'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:'Structural', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Luke Dowdy', bOrg:'DPR', bRole:'CSA team'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:'Concrete', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Jacqueline Jordan', bOrg:'DPR', bRole:'CSA team'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:'Architectural', type:'SUBM',a:'Tom Pykonen',aOrg:'Crusoe',b:'Jarret Griffee', bOrg:'DPR', bRole:'Interiors'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:"RFI's/Submittals",type:'SUBM',a:'Tom Pykonen',aOrg:'Crusoe',b:'Cyndi Garcia', bOrg:'REI'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:"RFI's/Submittals",type:'SUBM',a:'Tom Pykonen',aOrg:'Crusoe',b:'Kimberly Luco', bOrg:'SL'},
+ {person:'Tom Pykonen',ptitle:'CM',scope:'Field', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Dylan Barret, Bert Thedford',bOrg:'DPR',bRole:'General super'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'Schedule', type:'SCHED',a:'Wayne Pykonen',aOrg:'Crusoe',b:'Lu Becerra, Kola A', bOrg:'Crusoe',bRole:'Scheduling'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'Schedule', type:'SCHED',a:'Wayne Pykonen',aOrg:'Crusoe',b:'Frankie Reed', bOrg:'DPR', bRole:'Scheduling'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'CX', type:'CX', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Zack Pearson, Jose Fernandez Felgueroso', bOrg:'Crusoe',bRole:'Commissioning'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'CX', type:'CX', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Dustin', bOrg:'Crusoe',bRole:'Commissioning'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'QA/QC', type:'QC', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Erick Guidry', bOrg:'Crusoe',bRole:'QA/QC'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'DPR Program Exec', type:'OVR',a:'Wayne Pykonen',aOrg:'Crusoe',b:'Peter Stamos',  bOrg:'DPR',bRole:'PX'},
+    {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'DPR Program Exec', type:'OVR',a:'Wayne Pykonen',aOrg:'Crusoe',b:'John Lassiter',  bOrg:'DPR',bRole:'PX'},
+    {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'DPR Program Exec', type:'OVR',a:'Wayne Pykonen',aOrg:'Crusoe',b:'Joe Arismendez', bOrg:'DPR',bRole:'PX'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'Program', type:'OVR', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Travis Phillips', bOrg:'SL'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'Program', type:'OVR', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Jayson Nelson', bOrg:'REI'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'MEP', type:'MEP', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Taylor Slack', bOrg:'Crusoe',bRole:'MEP CM'},
+ {person:'Wayne Pykonen',ptitle:'Sr. CM',scope:'MEP', type:'MEP', a:'Wayne Pykonen',aOrg:'Crusoe',b:'Josh Ghacemi', bOrg:'Crusoe',bRole:'MEP CM'},
+ {person:'Hemanth Yerra',ptitle:'CM',scope:'Cost', type:'COST',a:'Hemanth Yerra',aOrg:'Crusoe',b:'Nate Chen', bOrg:'Crusoe',bRole:'Cost controls'},
+ {person:'Hemanth Yerra',ptitle:'CM',scope:'Cost', type:'COST',a:'Hemanth Yerra',aOrg:'Crusoe',b:'Vivek Kate', bOrg:'Crusoe',bRole:'Cost controls'},
+ {person:'Hemanth Yerra',ptitle:'CM',scope:'Sustainability', type:'SUST', a:'Hemanth Yerra',aOrg:'Crusoe',b:'Hui Wen Chan',  bOrg:'Crusoe',bRole:'Sustainability'},
+ {person:'Hemanth Yerra',ptitle:'CM',scope:'Submittals', type:'SUBM',a:'Hemanth Yerra',aOrg:'Crusoe',b:'Jarret Griffee', bOrg:'DPR', bRole:'Interiors'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'OFCI/CFCI', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Shalamar Solomon', bOrg:'DPR', bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'OFCI/CFCI', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'James Cho', bOrg:'DPR', bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'Procurement', type:'OFCI_T',a:'Abhi Tomar',aOrg:'Crusoe',b:'Israel Segura', bOrg:'Crusoe',bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'Procurement', type:'PROC',a:'Abhi Tomar',aOrg:'Crusoe',b:'Matt McGrath', bOrg:'Crusoe',bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'Procurement', type:'PROC',a:'Abhi Tomar',aOrg:'Crusoe',b:'Brodey Altamirano', bOrg:'Crusoe',bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'Procurement', type:'OFCI_T',a:'Abhi Tomar',aOrg:'Crusoe',b:'Jai Patel', bOrg:'Crusoe',bRole:'OFCI'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Ethan Freer, Jarrod McPhetridge', bOrg:'DPR', bRole:'MEP CM'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Wes Denton', bOrg:'DPR', bRole:'MEP CM'},
+ {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Alex Stewart', bOrg:'DPR', bRole:'MEP CM'},
+ {person:'Tom Pykonen', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Tom Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Wayne Pykonen', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Wayne Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Hemanth Yerra', ptitle:'CM', scope:'AlphaTech',type:'OVR',a:'Hemanth Yerra', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Abhi Tomar', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Abhi Tomar', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ ]},
+ {n:'MEP CM',c:2,o:{Crusoe:'Josh Ghacemi, Taylor Slack',DPR:'Vic Bonin, Joe Arismendez, Ethan Freer (B9 MEP Lead), Jarrod McPhetridge (B10 MEP Lead)',MS:'Ashley Montufar, Klara Mekhael, Brandon Ferrier',SL:'Travis Phillips',REI:'Jacob Pusich, Bracken White, John Messec, Paul Gotfried'}},
+ {n:'CSA team',c:2,o:{Crusoe:'Michael Cargell, Dane Armand',DPR:'Jacqueline Jordan, Luke Dowdy, Tristan LeBaron, Ankur Rana, Minh Phan, Westley Francis',MS:'Emilio Guzman',SL:'—',REI:'N/A'}},
+ {n:'Interiors',c:2,o:{Crusoe:'Tom Pykonen',DPR:'See breakdown below ↓',MS:'—',SL:'—',REI:'N/A'},pairingsLabel:'DPR-PCL Breakdown',hidePerson:true,pairings:[
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B9 — Area A/D/Cups', type:'B9_ACD',a:'Tom Pykonen',aOrg:'Crusoe',b:'Steven Sandel',    bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B9 — Area B/C/Cups', type:'B9_BC',a:'Tom Pykonen',aOrg:'Crusoe',b:'Shane Cody',       bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B9 — Area E/F',      type:'B9_EF',a:'Tom Pykonen',aOrg:'Crusoe',b:'Chris Wise',       bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B10 — Area A/D/Cups',type:'B10_ACD',a:'Tom Pykonen',aOrg:'Crusoe',b:'Tim Gilreath',   bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B10 — Area B/C/Cups',type:'B10_BC',a:'Tom Pykonen',aOrg:'Crusoe',b:'Brian Wolford', bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B10 — Area E/F',     type:'B10_EF',a:'Tom Pykonen',aOrg:'Crusoe',b:'Phil Maguire',   bOrg:'DPR',bRole:'Interiors'},
+    {person:'Tom Pykonen',ptitle:'CM',scope:'B9/10 Sr PM',             type:'SRPM',a:'Tom Pykonen',aOrg:'Crusoe',b:'Tyler Craddock', bOrg:'DPR',bRole:'Interiors'},
+  ]},
+ {n:'General super',c:2,o:{Crusoe:'—',DPR:'Jimmy Rodgers, Bryan Langdorf, Chris Stamper, Andrew Hawkins, Chip Meade',MS:'—',SL:'Joe Schirf, Wayne Lutrell, Mike Adams',REI:'Jacob Pusich'}},
+ {n:'QA/QC',c:2,o:{Crusoe:'Erick Guidry',DPR:'Jimmy Rodgers, Todd Whitehouse, Jose Rivera',MS:'Peter Prokein',SL:'Shane Brummett',REI:'William Grimland'}},
+ {n:'Scheduling',c:2,o:{Crusoe:'Lu Becerra, Kola A',DPR:'Frankie Reed, Luis Arce, James Osinowo, Kevin Dick',MS:'Sreeganesh Reddy Yerri',SL:'Layth Amar',REI:'Anthony Springer'}},
+ {n:'Telecom / ITIM',c:3,o:{Crusoe:'Satiya Taeidi',DPR:'Mark Jones, Joe Arismendez',MS:'Charles Clancy, Awais Zubair',SL:'—',REI:'N/A'}},
+ {n:'Phys. security',c:3,o:{Crusoe:'Greg Bowman',DPR:'Joshua Jack',MS:'Johnny Epps, Grant Goins, Ana Karian Paulin',SL:'—',REI:'N/A'}},
+ {n:'Network',c:3,o:{Crusoe:'—',DPR:'Mark Jones, Joe Arismendez',MS:'Juan Rodriguez, Jerome Beckles, Joshua Modrzynski',SL:'—',REI:'N/A'}},
+ {n:'OFCI',c:3,o:{Crusoe:'Israel Segura, Jai Patel, Justin Deleon',DPR:'Wes Denton, James Cho',MS:'Bryan Brooks',SL:'Derek Grimes',REI:'Craig Jackson'}},
+ {n:'Power delivery',c:3,o:{Crusoe:'Michael McSchaefer',DPR:'Daniel Kerr, Joe Arismendez, Will Perry, Denis Dubord, Cody Osborne, Jonathan Adams',MS:'Kyle Longville',SL:'—',REI:'Jacob Pusich'}},
+ {n:'Safety / EH&S',c:4,o:{Crusoe:'Pablo Trejo',DPR:'Scott Hanyzewski, Cody Russell',MS:'Marie Derksen',SL:'Preston Barkley',REI:'Kelley Jeffress'}},
+ {n:'Cost controls',c:4,o:{Crusoe:'Nate Chen, Vivek Kate',DPR:'Joe Opyd, Claire Stein, Michael Kujath, Kaz Robertson, Darin Miller',MS:'Jonathan Willis, Edward Canney, Alex Veal',SL:'Marshall McClain',REI:'Raquel Swain, John Messick'}},
+ {n:'Environmental',c:4,o:{Crusoe:'Heather Vainisi, Rose Grenen Gallagher',DPR:'Westley Francis',MS:'Marie Derksen',SL:'Danny Shelby',REI:'N/A'}},
+  {n:'Sustainability',c:4,o:{Crusoe:'Hui Wen Chan',DPR:'—',MS:'—',SL:'—',REI:'N/A'}},
+];
+
+function r2d(d){return d*Math.PI/180;}
+function pxy(a,r){return{x:+((CX+Math.cos(r2d(a))*r).toFixed(1)),y:+((CY+Math.sin(r2d(a))*r).toFixed(1))};}
+function emp(s){return !s||s==='\u2014'||s==='N/A';}
+function vn(n){return !!(n&&n.trim().length>=2);}
+function ini(n){if(!n)return'?';var p=n.trim().split(/\s+/);return(p.length>=2?p[0][0]+p[p.length-1][0]:n.slice(0,2)).toUpperCase();}
+function ago(ts){if(!ts)return'';var s=Math.floor((Date.now()-ts)/1e3),m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24);if(s<10)return'just now';if(s<60)return s+'s ago';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return d+'d ago';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function findRI(name){return RL.findIndex(function(r){return r.n===name;});}
+
+(function(){
+ var tot=RL.length,av=360-CL.length*GAP,dpr=av/tot,ang=START+GAP/2;
+ CL.forEach(function(cl){
+ var cr=RL.filter(function(r){return r.c===cl.id;}),sa=ang;
+ cr.forEach(function(r,i){r.angle=sa+i*dpr;});
+ cl.angle=sa+(cr.length-1)/2*dpr;cl.roles=cr;ang=sa+cr.length*dpr+GAP;
+ });
+})();
+
+var ST={sel:null,org:null,q:'',ci:null,edit:false};
+
+var PAIR_VIEW='person';
+
+function mO(ri){return !ST.org||!emp(RL[ri].o[ST.org]);}
+function mQ(ri){if(!ST.q||ST.q.length<2)return true;var ql=ST.q.toLowerCase(),r=RL[ri];return r.n.toLowerCase().includes(ql)||OR.some(function(o){return r.o[o.k]&&r.o[o.k].toLowerCase().includes(ql);});}
+function mC(ri){return ST.ci===null||RL[ri].c===ST.ci;}
+function hi(ri){return mO(ri)&&mQ(ri)&&mC(ri);}
+function hF(){return !!(ST.org||(ST.q&&ST.q.length>=2)||ST.ci!==null);}
+function op(ri){if(ST.sel===ri)return 1;if(hF())return hi(ri)?.94:.22;if(ST.sel===null)return 1;return RL[ri].c===RL[ST.sel].c?.58:.38;}
+
+document.getElementById('legend').innerHTML=CL.map(function(cl){return'<span class="li"><span class="ld" style="background:'+cl.hx+'"></span>'+esc(cl.name)+'</span>';}).join('');
+document.getElementById('org-f').innerHTML=OR.map(function(o){return'<button class="ob" data-k="'+o.k+'" style="color:'+o.hx+';border-color:'+o.hx+'">'+esc(o.l)+'</button>';}).join('');
+
+(function(){
+ var s=[];
+ s.push('<defs>'+
+'<radialGradient id="mapbg" cx="'+CX+'" cy="'+CY+'" r="370" gradientUnits="userSpaceOnUse">'+
+'<stop offset="0%" stop-color="#ffffff"/><stop offset="70%" stop-color="#f9f8f4"/><stop offset="100%" stop-color="#f2f0eb"/>'+
+'</radialGradient>'+
+'<filter id="nf" x="-100%" y="-100%" width="300%" height="300%"><feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#0f0f0e" flood-opacity=".18"/></filter>'+
+'<filter id="bf" x="-20%" y="-50%" width="140%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f0f0e" flood-opacity=".22"/></filter>'+
+'<filter id="cf" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#0f0f0e" flood-opacity=".1"/></filter>'+
+'</defs>');
+ s.push('<rect x="-20" y="0" width="800" height="680" fill="url(#mapbg)"/>');
+ s.push('<circle cx="'+CX+'" cy="'+CY+'" r="'+CLUR+'" fill="none" stroke="#dedad2" stroke-width=".75" opacity=".5"/>');
+ s.push('<circle cx="'+CX+'" cy="'+CY+'" r="'+ROLR+'" fill="none" stroke="#dedad2" stroke-width=".75" opacity=".35"/>');
+ CL.forEach(function(cl){
+ var cp=pxy(cl.angle,CLUR);
+ s.push('<line class="spk" data-ci="'+cl.id+'" x1="'+CX+'" y1="'+CY+'" x2="'+cp.x+'" y2="'+cp.y+'" stroke="'+cl.hx+'" stroke-width="1" opacity=".2"/>');
+ cl.roles.forEach(function(r){var rp=pxy(r.angle,ROLR),mp=pxy(r.angle,CLUR+62),ri=RL.indexOf(r);s.push('<path class="brc" data-ri="'+ri+'" d="M'+cp.x+','+cp.y+' Q'+mp.x+','+mp.y+','+rp.x+','+rp.y+'" fill="none" stroke="'+cl.hx+'" stroke-width="1" opacity=".25"/>');});
+ });
+ s.push('<g id="ziplines-group"></g>');
+ RL.forEach(function(r,ri){
+ var rp=pxy(r.angle,ROLR),cl=CL[r.c],a=r.angle,tx,ty,anc;
+ if(a>-102&&a<-78){tx=rp.x;ty=rp.y-21;anc='middle';}
+ else if(a>78&&a<102){tx=rp.x;ty=rp.y+21;anc='middle';}
+ else if(rp.x>=CX){tx=rp.x+16;ty=rp.y;anc='start';}
+ else{tx=rp.x-16;ty=rp.y;anc='end';}
+ var hp=r.pairings&&r.pairings.length>0;
+ s.push('<g class="rg" data-ri="'+ri+'">'+
+'<circle cx="'+rp.x+'" cy="'+rp.y+'" r="20" fill="transparent" stroke="none"/>'+
+'<circle class="rhalo" cx="'+rp.x+'" cy="'+rp.y+'" r="11" fill="'+cl.fhx+'" stroke="'+cl.hx+'" stroke-width="2" opacity="0"/>'+
+'<circle class="rnd" cx="'+rp.x+'" cy="'+rp.y+'" r="6" fill="'+cl.hx+'" opacity=".95" filter="url(#nf)"/>'+
+'<circle class="rctr" cx="'+rp.x+'" cy="'+rp.y+'" r="2.5" fill="#fff" opacity="0"/>'+
+ (hp?'<circle cx="'+rp.x+'" cy="'+(rp.y-9)+'" r="2.5" fill="'+cl.hx+'" opacity=".6"/>':'')+
+'<text class="rlb" x="'+tx+'" y="'+ty+'" text-anchor="'+anc+'" dominant-baseline="central" font-family="-apple-system,sans-serif" font-size="11.5" font-weight="400" fill="#5a5856">'+esc(r.n)+'</text>'+
+'</g>');
+ });
+ CL.forEach(function(cl){var cp=pxy(cl.angle,CLUR);s.push('<g class="clg" data-ci="'+cl.id+'" style="cursor:pointer;"><rect x="'+(cp.x-cl.sw/2)+'" y="'+(cp.y-15)+'" width="'+cl.sw+'" height="30" rx="15" fill="'+cl.hx+'" filter="url(#bf)"/><text x="'+cp.x+'" y="'+cp.y+'" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,sans-serif" font-size="10.5" font-weight="700" fill="#fff" letter-spacing=".2">'+esc(cl.sh)+'</text></g>');});
+ s.push('<g id="ctr-node" style="cursor:pointer;">'+
+'<circle cx="'+CX+'" cy="'+CY+'" r="'+(CENR+18)+'" fill="rgba(186,117,23,.05)" stroke="none"/>'+
+'<circle cx="'+CX+'" cy="'+CY+'" r="'+(CENR+10)+'" fill="rgba(255,255,255,.97)" stroke="#ece9e2" stroke-width="1" filter="url(#cf)"/>'+
+'<circle cx="'+CX+'" cy="'+CY+'" r="'+(CENR+4)+'" fill="none" stroke="#ecac45" stroke-width="1.5" opacity=".25"/>'+
+'<circle cx="'+CX+'" cy="'+CY+'" r="'+CENR+'" fill="#fff" stroke="#d8d5ce" stroke-width="1"/>'+
+'<circle cx="'+CX+'" cy="'+CY+'" r="'+(CENR-12)+'" fill="none" stroke="#e8e8e8" stroke-width="1"/>'+
+'<text x="'+CX+'" y="'+(CY-9)+'" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="700" fill="#0f0f0e" letter-spacing="-.2">ABI20/21</text>'+
+'<text x="'+CX+'" y="'+(CY+10)+'" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,sans-serif" font-size="9" font-weight="600" fill="#ecac45" letter-spacing="1.5">EAGLE 5</text>'+
+'</g>');
+ document.getElementById('zmap').innerHTML=s.join('');
+})();
+
+function applyMap(){
+ document.querySelectorAll('.rg').forEach(function(g){
+ var ri=parseInt(g.dataset.ri),o=op(ri),sel=ST.sel===ri;
+ g.style.opacity=o;g.style.transition='opacity .2s';
+ var nd=g.querySelector('.rnd'),lb=g.querySelector('.rlb'),halo=g.querySelector('.rhalo'),ctr=g.querySelector('.rctr');
+ if(nd)nd.setAttribute('r',sel?8.5:(hi(ri)&&hF()?7.5:6));
+ if(halo){halo.setAttribute('opacity',sel?'.35':'0');halo.setAttribute('r',sel?'14':'11');}
+ if(ctr)ctr.setAttribute('opacity',sel?'1':'0');
+ if(lb){lb.setAttribute('fill',(sel||(hi(ri)&&o>.5))?'#0f0f0e':'#b8b6ae');lb.setAttribute('font-weight',sel?'700':'400');lb.setAttribute('font-size',sel?'12':'11.5');}
+ });
+ document.querySelectorAll('.brc').forEach(function(el){var ri=parseInt(el.dataset.ri),sl=ri===ST.sel,h=hi(ri);el.setAttribute('opacity',sl?.88:(hF()?(h?.5:.08):(ST.sel!==null?.14:.25)));el.setAttribute('stroke-width',sl?'2':(h&&hF()?'1.4':'1'));});
+ document.querySelectorAll('.spk').forEach(function(el){var ci=parseInt(el.dataset.ci),sc=ST.sel!==null&&RL[ST.sel].c===ci,ah=RL.some(function(r,ri){return r.c===ci&&hi(ri);});el.setAttribute('opacity',sc?.65:(hF()?(ah?.42:.08):(ST.sel!==null?.18:.22)));el.setAttribute('stroke-width',sc?'1.5':(ah?'1.5':'1'));});
+ document.querySelectorAll('.ob').forEach(function(b){var o=OR.find(function(x){return x.k===b.dataset.k;});if(b.dataset.k===ST.org){b.style.background=o.hx;b.style.color='#fff';}else{b.style.background='transparent';b.style.color=o.hx;}});
+ }
+
+
+
+
+function showBattleCard(person){
+ var pairings=[];
+ RL.forEach(function(r){if(r.pairings)r.pairings.forEach(function(p){if(p.person===person)pairings.push(p);});});
+ if(!pairings.length){alert('No pairings found for'+person);return;}
+ var ptitle=pairings[0].ptitle||'',scopes=[],groups={};
+ pairings.forEach(function(p){if(p.scope&&scopes.indexOf(p.scope)<0)scopes.push(p.scope);var s=p.scope||'General';if(!groups[s])groups[s]=[];groups[s].push(p);});
+ var inits=person.trim().split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+ var now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+ var rows='';
+ Object.keys(groups).forEach(function(scope){
+ var items=groups[scope];
+ var pt=items[0].type?PT[items[0].type]||{lbl:'',bg:'#eee',tx:'#666'}:{lbl:'',bg:'#eee',tx:'#666'};
+ rows+='<tr><td colspan="3" style="background:#ffffff;padding:5px 10px 4px;border-bottom:0.5px solid #e8e8e8;">'+
+'<span style="font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.5px;text-transform:uppercase">'+scope+'</span>'+
+ (items[0].type?'<span style="display:inline-block;margin-left:8px;padding:1px 8px;border-radius:8px;background:'+pt.bg+';color:'+pt.tx+';font-size:10px;font-weight:700">'+esc(pt.lbl)+'</span>':'')+
+'</td></tr>';
+ items.forEach(function(p){
+ var bO=OR.find(function(o){return o.k===p.bOrg;})||{l:p.bOrg,hx:'#888'};
+ rows+='<tr><td style="font-weight:600;color:#0f0f0e">'+esc(p.b)+'</td><td style="color:'+bO.hx+';font-weight:700;font-size:11px">'+esc(bO.l)+'</td><td style="color:#6a6860;font-size:11px">'+esc(p.bRole||'\u2014')+'</td></tr>';
+ });
+ });
+ var scopeHtml=scopes.map(function(s){return'<span style="display:inline-block;padding:3px 10px;border-radius:12px;background:#e8e8e8;font-size:11px;font-weight:600;color:#6a5a20;margin:0 4px 4px 0">'+esc(s)+'</span>';}).join('');
+ var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Battle Card \u2014'+esc(person)+'</title>'+
+'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,sans-serif;padding:32px;max-width:680px;margin:0 auto;color:#323c2a;}'+
+'.hdr{display:flex;align-items:center;gap:18px;margin-bottom:20px;padding-bottom:16px;border-bottom:3px solid #0f0f0e;}'+
+'.av{width:56px;height:56px;border-radius:50%;background:#323c2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;}'+
+'.nm{font-size:22px;font-weight:700;letter-spacing:-.3px;}.tl{font-size:12px;color:#6a6860;margin-top:3px;}.pj{font-size:11px;color:#ecac45;font-weight:600;letter-spacing:.3px;margin-top:3px;}'+
+'.sc{margin-bottom:18px;}table{width:100%;border-collapse:collapse;font-size:12px;border:0.5px solid #e8e8e8;border-radius:8px;overflow:hidden;}'+
+'thead tr{background:#0f0f0e;}th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase;}'+
+'td{padding:8px 10px;border-bottom:0.5px solid #e8e8e8;vertical-align:middle;}tr:last-child td{border-bottom:none;}tr:hover td{background:#ffffff;}'+
+'.ft{margin-top:20px;font-size:10px;color:#ced2cb;display:flex;justify-content:space-between;padding-top:10px;border-top:0.5px solid #e8e8e8;}'+
+'button.pb{display:block;margin:20px auto 0;padding:9px 28px;background:#ecac45;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}'+
+'@media print{button.pb{display:none!important;}body{padding:16px;}}</style></head><body>'+
+'<div class="hdr"><div class="av">'+esc(inits)+'</div><div><div class="nm">'+esc(person)+'</div><div class="tl">'+esc(ptitle)+' &nbsp;&middot;&nbsp; Crusoe Energy Systems</div><div class="pj">Eagle 5 &nbsp;&middot;&nbsp; ABI20/21 &nbsp;&middot;&nbsp; Abilene, TX</div></div></div>'+
+'<div class="sc">'+scopeHtml+'</div>'+
+'<table><thead><tr><th>Counterpart</th><th>Organization</th><th>Role, Scope</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+'<div class="ft"><span>Eagle 5 Zippering Plan &nbsp;&middot;&nbsp;'+now+'</span><span>Crusoe Energy Systems &nbsp;&middot;&nbsp; CONFIDENTIAL</span></div>'+
+'<button class="pb" onclick="window.print()">Print / Save as PDF</button></body></html>';
+ var w=window.open('','_blank','width=750,height=920');w.document.write(html);w.document.close();
+}
+
+function renderPairings(ri){
+ var r=RL[ri],ps=r.pairings||[];
+ var html='<div class="pair-sect" id="pair-sect">';
+ var pLabel=r.pairingsLabel||'Individual pairings';
+ html+='<div class="pair-hdr"><span class="pair-hdr-lbl">'+esc(pLabel)+'</span>';
+ html+='<div style="display:flex;align-items:center;gap:6px;">';
+ if(ps.length){html+='<div class="pview-tabs"><button class="pvtab'+(PAIR_VIEW==='person'?' on':'')+'" id="pvtab-person">By person</button><button class="pvtab'+(PAIR_VIEW==='matrix'?' on':'')+'" id="pvtab-matrix">Matrix</button></div>';}
+ html+='</div></div>';
+ if(!ps.length){html+='<div class="pair-nil">'+'No pairings defined.'+'</div>';}
+ else if(PAIR_VIEW==='matrix'){html+=renderPairMatrix(ps);}
+ else{html+=renderPairPersonView(ri,ps);}
+ if(ps.length){var used=[];ps.forEach(function(p){if(p.type&&used.indexOf(p.type)<0)used.push(p.type);});html+='<div class="pt-legend">';used.forEach(function(t){var pt=PT[t]||{lbl:t,bg:'#eee',tx:'#666',dot:'#999'};html+='<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>';});html+='</div>';}
+ html+='</div>';return html;
+}
+function renderPairPersonView(ri,ps){
+ var hidePersonHdr=RL[ri]&&RL[ri].hidePerson;
+ var order=[],gmap={};
+ ps.forEach(function(p,pi){var k=p.person||p.a;if(!gmap[k]){gmap[k]={ptitle:p.ptitle||'',items:[],idx:[]};order.push(k);}gmap[k].items.push(p);gmap[k].idx.push(pi);});
+ var html='<div id="pair-rows">';
+ order.forEach(function(k){
+ var g=gmap[k];
+ var inits=k.trim().split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+ var scopes=[];g.items.forEach(function(p){if(p.scope&&scopes.indexOf(p.scope)<0)scopes.push(p.scope);});
+ html+='<div class="pg">';
+ if(!hidePersonHdr){html+='<div class="pg-hdr"><div class="pg-avatar">'+esc(inits)+'</div><span class="pg-name">'+esc(k)+'</span>'+(g.ptitle?'<span class="pg-title">'+esc(g.ptitle)+'</span>':'')+scopes.map(function(s){return'<span class="pg-scope">'+esc(s)+'</span>';}).join('')+'<button class="pg-card-btn" data-person="'+esc(k)+'">📋 Card</button></div>';}
+ g.items.forEach(function(p,li){
+ var pi=g.idx[li];
+ var bO=OR.find(function(o){return o.k===p.bOrg;})||{hx:'#888',l:p.bOrg};
+ var ti=p.bRole?findRI(p.bRole):-1,tlCl=ti>=0?CL[RL[ti].c]:null;
+ var pt=PT[p.type]||{lbl:p.type||',',bg:'#f0f0f0',tx:'#666',dot:'#999'};
+ html+='<div class="pg-row">'+
+ (p.type?'<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>':'')+
+'<span class="pr-name">'+esc(p.b)+'</span>'+
+'<span class="pr-org" style="color:'+bO.hx+';font-size:10px;font-weight:700">'+esc(bO.l)+'</span>'+
+ (ti>=0&&tlCl?'<button class="pr-role" data-ri="'+ti+'" style="border-color:'+tlCl.hx+';color:'+tlCl.hx+'">'+esc(p.bRole)+' \u2192</button>':'')+
+ ''+
+'</div>';
+ });
+ html+='</div>';
+ });
+ html+='</div>';return html;
+}
+function renderPairMatrix(ps){
+ var order=[],gmap={};
+ ps.forEach(function(p){var k=p.person||p.a;if(!gmap[k]){gmap[k]={ptitle:p.ptitle||'',cols:{}};order.push(k);}var col=p.bOrg==='Crusoe'?'Internal':(p.bOrg||'?');if(!gmap[k].cols[col])gmap[k].cols[col]=[];gmap[k].cols[col].push(p);});
+ var cols=['DPR','MS','SL','Internal'];
+ var html='<div style="overflow-x:auto;margin-top:6px;"><table class="pair-matrix"><thead><tr><th>CM person</th>';
+ cols.forEach(function(col){var o=OR.find(function(x){return x.k===col;})||{l:col,hx:'#666'};html+='<th style="color:'+(o.hx||'#666')+'">'+esc(o.l||col)+'</th>';});
+ html+='</tr></thead><tbody>';
+ order.forEach(function(k){
+ var g=gmap[k];html+='<tr><td><div class="pm-person">'+esc(k)+'</div><div class="pm-title">'+esc(g.ptitle)+'</div></td>';
+ cols.forEach(function(col){var entries=g.cols[col]||[];html+='<td><div class="pm-cell">';if(!entries.length){html+='<span class="pm-nil">\u2014</span>';}else{entries.forEach(function(p){var pt=PT[p.type]||{lbl:'',bg:'#eee',tx:'#666',dot:'#999'};var ti=p.bRole?findRI(p.bRole):-1,tlCl=ti>=0?CL[RL[ti].c]:null;html+='<div class="pm-entry">'+(p.type?'<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>':'')+'<span class="pm-name">'+esc(p.b)+'</span>'+(ti>=0&&tlCl?'<button class="pr-role" data-ri="'+ti+'" style="border-color:'+tlCl.hx+';color:'+tlCl.hx+'">'+esc(p.bRole)+' \u2192</button>':'')+'</div>';});}html+='</div></td>';});
+ html+='</tr>';
+ });
+ html+='</tbody></table></div>';return html;
+}
+function wirePairings(ri){
+ document.querySelectorAll('.pr-del').forEach(function(btn){btn.addEventListener('click',function(){deletePairing(parseInt(btn.dataset.ri),parseInt(btn.dataset.pi));});});
+ document.querySelectorAll('.pr-role').forEach(function(btn){btn.addEventListener('click',function(){selR(parseInt(btn.dataset.ri));});});
+ document.querySelectorAll('.pg-card-btn').forEach(function(btn){btn.addEventListener('click',function(){showBattleCard(btn.dataset.person);});});
+ var tabP=document.getElementById('pvtab-person'),tabM=document.getElementById('pvtab-matrix');
+ if(tabP)tabP.addEventListener('click',function(){PAIR_VIEW='person';var s=document.getElementById('pair-sect');if(s)s.remove();document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ri));wirePairings(ri);});
+ if(tabM)tabM.addEventListener('click',function(){PAIR_VIEW='matrix';var s=document.getElementById('pair-sect');if(s)s.remove();document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ri));wirePairings(ri);});
+}
+function showPairForm(ri){
+ if(document.getElementById('pair-form'))return;
+ var sect=document.getElementById('pair-sect');if(!sect)return;
+ var orgOpts=OR.map(function(o){return'<option value="'+o.k+'">'+esc(o.l)+'</option>';}).join('');
+ var roleOpts='<option value="">None</option>'+RL.map(function(r){return'<option value="'+esc(r.n)+'">'+esc(r.n)+'</option>';}).join('');
+ var typeOpts=Object.keys(PT).map(function(k){return'<option value="'+k+'">'+PT[k].lbl+'</option>';}).join('');
+ var persons=[];RL[ri].pairings.forEach(function(p){if(p.person&&persons.indexOf(p.person)<0)persons.push(p.person);});
+ var personOpts=persons.map(function(p){return'<option>'+esc(p)+'</option>';}).join('');
+ var form=document.createElement('div');form.id='pair-form';form.className='pair-form';
+ form.innerHTML='<span class="pair-form-lbl">New pairing</span>'+
+'<select class="psel" id="pf-person"><option value="">CM person\u2026</option>'+personOpts+'</select>'+
+'<select class="psel" id="pf-type"><option value="">Type\u2026</option>'+typeOpts+'</select>'+
+'<input class="pinp" id="pf-b" placeholder="Counterpart name\u2026" maxlength="60">'+
+'<select class="psel" id="pf-bo">'+orgOpts+'</select>'+
+'<select class="psel" id="pf-role">'+roleOpts+'</select>'+
+'<button class="psave" id="pf-save">Add</button><button class="pcancel" id="pf-cancel">Cancel</button>';
+ sect.appendChild(form);document.getElementById('pf-b').focus();
+ document.getElementById('pf-save').addEventListener('click',function(){
+ var person=document.getElementById('pf-person').value.trim();
+ var b=document.getElementById('pf-b').value.trim();
+ var bo=document.getElementById('pf-bo').value;
+ var br=document.getElementById('pf-role').value;
+ var type=document.getElementById('pf-type').value;
+ if(!b){document.getElementById('pf-b').style.borderColor='#A32D2D';return;}
+ var pair={a:person||'CM team',aOrg:'Crusoe',b:b,bOrg:bo,person:person||'CM team',ptitle:'',scope:'',type:type};
+ if(br)pair.bRole=br;
+ savePairing(ri,pair);
+ });
+ document.getElementById('pf-cancel').addEventListener('click',function(){form.remove();});
+}
+function savePairing(ri,pairing){
+ if(!RL[ri].pairings)RL[ri].pairings=[];
+ RL[ri].pairings.push(pairing);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ renderPanel();
+}
+function deletePairing(ri,pi){
+ if(!RL[ri].pairings)return;
+ RL[ri].pairings.splice(pi,1);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ renderPanel();
+}
+
+function renderPairings(ri){
+ var r=RL[ri],ps=r.pairings||[];
+ var html='<div class="pair-sect" id="pair-sect">';
+ var pLabel=r.pairingsLabel||'Individual pairings';
+ html+='<div class="pair-hdr"><span class="pair-hdr-lbl">'+esc(pLabel)+'</span>';
+ html+='<div style="display:flex;align-items:center;gap:6px;">';
+ if(ps.length){html+='<div class="pview-tabs"><button class="pvtab'+(PAIR_VIEW==='person'?' on':'')+'" id="pvtab-person">By person</button><button class="pvtab'+(PAIR_VIEW==='matrix'?' on':'')+'" id="pvtab-matrix">Matrix</button></div>';}
+ html+='</div></div>';
+ if(!ps.length){html+='<div class="pair-nil">'+'No pairings defined.'+'</div>';}
+ else if(PAIR_VIEW==='matrix'){html+=renderPairMatrix(ps);}
+ else{html+=renderPairPersonView(ri,ps);}
+ if(ps.length){var used=[];ps.forEach(function(p){if(p.type&&used.indexOf(p.type)<0)used.push(p.type);});html+='<div class="pt-legend">';used.forEach(function(t){var pt=PT[t]||{lbl:t,bg:'#eee',tx:'#666',dot:'#999'};html+='<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>';});html+='</div>';}
+ html+='</div>';return html;
+}
+function renderPairPersonView(ri,ps){
+ var hidePersonHdr=RL[ri]&&RL[ri].hidePerson;
+ var order=[],gmap={};
+ ps.forEach(function(p,pi){var k=p.person||p.a;if(!gmap[k]){gmap[k]={ptitle:p.ptitle||'',items:[],idx:[]};order.push(k);}gmap[k].items.push(p);gmap[k].idx.push(pi);});
+ var html='<div id="pair-rows">';
+ order.forEach(function(k){
+ var g=gmap[k];
+ var inits=k.trim().split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+ var scopes=[];g.items.forEach(function(p){if(p.scope&&scopes.indexOf(p.scope)<0)scopes.push(p.scope);});
+ html+='<div class="pg">';
+ if(!hidePersonHdr){html+='<div class="pg-hdr"><div class="pg-avatar">'+esc(inits)+'</div><span class="pg-name">'+esc(k)+'</span>'+(g.ptitle?'<span class="pg-title">'+esc(g.ptitle)+'</span>':'')+scopes.map(function(s){return'<span class="pg-scope">'+esc(s)+'</span>';}).join('')+'<button class="pg-card-btn" data-person="'+esc(k)+'">📋 Card</button></div>';}
+ g.items.forEach(function(p,li){
+ var pi=g.idx[li];
+ var bO=OR.find(function(o){return o.k===p.bOrg;})||{hx:'#888',l:p.bOrg};
+ var ti=p.bRole?findRI(p.bRole):-1,tlCl=ti>=0?CL[RL[ti].c]:null;
+ var pt=PT[p.type]||{lbl:p.type||',',bg:'#f0f0f0',tx:'#666',dot:'#999'};
+ html+='<div class="pg-row">'+
+ (p.type?'<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>':'')+
+'<span class="pr-name">'+esc(p.b)+'</span>'+
+'<span class="pr-org" style="color:'+bO.hx+';font-size:10px;font-weight:700">'+esc(bO.l)+'</span>'+
+ (ti>=0&&tlCl?'<button class="pr-role" data-ri="'+ti+'" style="border-color:'+tlCl.hx+';color:'+tlCl.hx+'">'+esc(p.bRole)+' \u2192</button>':'')+
+ ''+
+'</div>';
+ });
+ html+='</div>';
+ });
+ html+='</div>';return html;
+}
+function renderPairMatrix(ps){
+ var order=[],gmap={};
+ ps.forEach(function(p){var k=p.person||p.a;if(!gmap[k]){gmap[k]={ptitle:p.ptitle||'',cols:{}};order.push(k);}var col=p.bOrg==='Crusoe'?'Internal':(p.bOrg||'?');if(!gmap[k].cols[col])gmap[k].cols[col]=[];gmap[k].cols[col].push(p);});
+ var cols=['DPR','MS','SL','Internal'];
+ var html='<div style="overflow-x:auto;margin-top:6px;"><table class="pair-matrix"><thead><tr><th>CM person</th>';
+ cols.forEach(function(col){var o=OR.find(function(x){return x.k===col;})||{l:col,hx:'#666'};html+='<th style="color:'+(o.hx||'#666')+'">'+esc(o.l||col)+'</th>';});
+ html+='</tr></thead><tbody>';
+ order.forEach(function(k){
+ var g=gmap[k];html+='<tr><td><div class="pm-person">'+esc(k)+'</div><div class="pm-title">'+esc(g.ptitle)+'</div></td>';
+ cols.forEach(function(col){var entries=g.cols[col]||[];html+='<td><div class="pm-cell">';if(!entries.length){html+='<span class="pm-nil">\u2014</span>';}else{entries.forEach(function(p){var pt=PT[p.type]||{lbl:'',bg:'#eee',tx:'#666',dot:'#999'};var ti=p.bRole?findRI(p.bRole):-1,tlCl=ti>=0?CL[RL[ti].c]:null;html+='<div class="pm-entry">'+(p.type?'<span class="pt-badge" style="background:'+pt.bg+';color:'+pt.tx+'"><span class="pt-dot" style="background:'+pt.dot+'"></span>'+esc(pt.lbl)+'</span>':'')+'<span class="pm-name">'+esc(p.b)+'</span>'+(ti>=0&&tlCl?'<button class="pr-role" data-ri="'+ti+'" style="border-color:'+tlCl.hx+';color:'+tlCl.hx+'">'+esc(p.bRole)+' \u2192</button>':'')+'</div>';});}html+='</div></td>';});
+ html+='</tr>';
+ });
+ html+='</tbody></table></div>';return html;
+}
+function wirePairings(ri){
+ document.querySelectorAll('.pr-del').forEach(function(btn){btn.addEventListener('click',function(){deletePairing(parseInt(btn.dataset.ri),parseInt(btn.dataset.pi));});});
+ document.querySelectorAll('.pr-role').forEach(function(btn){btn.addEventListener('click',function(){selR(parseInt(btn.dataset.ri));});});
+ document.querySelectorAll('.pg-card-btn').forEach(function(btn){btn.addEventListener('click',function(){showBattleCard(btn.dataset.person);});});
+ var tabP=document.getElementById('pvtab-person'),tabM=document.getElementById('pvtab-matrix');
+ if(tabP)tabP.addEventListener('click',function(){PAIR_VIEW='person';var s=document.getElementById('pair-sect');if(s)s.remove();document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ri));wirePairings(ri);});
+ if(tabM)tabM.addEventListener('click',function(){PAIR_VIEW='matrix';var s=document.getElementById('pair-sect');if(s)s.remove();document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ri));wirePairings(ri);});
+}
+function showPairForm(ri){
+ if(document.getElementById('pair-form'))return;
+ var sect=document.getElementById('pair-sect');if(!sect)return;
+ var orgOpts=OR.map(function(o){return'<option value="'+o.k+'">'+esc(o.l)+'</option>';}).join('');
+ var roleOpts='<option value="">None</option>'+RL.map(function(r){return'<option value="'+esc(r.n)+'">'+esc(r.n)+'</option>';}).join('');
+ var typeOpts=Object.keys(PT).map(function(k){return'<option value="'+k+'">'+PT[k].lbl+'</option>';}).join('');
+ var persons=[];RL[ri].pairings.forEach(function(p){if(p.person&&persons.indexOf(p.person)<0)persons.push(p.person);});
+ var personOpts=persons.map(function(p){return'<option>'+esc(p)+'</option>';}).join('');
+ var form=document.createElement('div');form.id='pair-form';form.className='pair-form';
+ form.innerHTML='<span class="pair-form-lbl">New pairing</span>'+
+'<select class="psel" id="pf-person"><option value="">CM person\u2026</option>'+personOpts+'</select>'+
+'<select class="psel" id="pf-type"><option value="">Type\u2026</option>'+typeOpts+'</select>'+
+'<input class="pinp" id="pf-b" placeholder="Counterpart name\u2026" maxlength="60">'+
+'<select class="psel" id="pf-bo">'+orgOpts+'</select>'+
+'<select class="psel" id="pf-role">'+roleOpts+'</select>'+
+'<button class="psave" id="pf-save">Add</button><button class="pcancel" id="pf-cancel">Cancel</button>';
+ sect.appendChild(form);document.getElementById('pf-b').focus();
+ document.getElementById('pf-save').addEventListener('click',function(){
+ var person=document.getElementById('pf-person').value.trim();
+ var b=document.getElementById('pf-b').value.trim();
+ var bo=document.getElementById('pf-bo').value;
+ var br=document.getElementById('pf-role').value;
+ var type=document.getElementById('pf-type').value;
+ if(!b){document.getElementById('pf-b').style.borderColor='#A32D2D';return;}
+ var pair={a:person||'CM team',aOrg:'Crusoe',b:b,bOrg:bo,person:person||'CM team',ptitle:'',scope:'',type:type};
+ if(br)pair.bRole=br;
+ savePairing(ri,pair);
+ });
+ document.getElementById('pf-cancel').addEventListener('click',function(){form.remove();});
+}
+function savePairing(ri,pairing){
+ if(!RL[ri].pairings)RL[ri].pairings=[];
+ RL[ri].pairings.push(pairing);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ renderPanel();
+}
+function deletePairing(ri,pi){
+ if(!RL[ri].pairings)return;
+ RL[ri].pairings.splice(pi,1);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ renderPanel();
+}
+
+
+function findPerson(name){
+ var q=name.trim().toLowerCase();if(q.length<2)return null;
+ var roles=[],pairs=[],ifaces=[];
+ RL.forEach(function(r,ri){
+ var fo=[];OR.forEach(function(org){var ct=r.o[org.k]||'';if(ct.toLowerCase().includes(q))fo.push({org:org,ct:ct});});
+ if(fo.length)roles.push({ri:ri,r:r,orgs:fo});
+ if(r.pairings)r.pairings.forEach(function(p){
+ var mA=p.a&&p.a.toLowerCase().includes(q),mB=p.b&&p.b.toLowerCase().includes(q);
+ if(mA||mB){pairs.push({ri:ri,r:r,p:p});if(p.bRole&&ifaces.indexOf(p.bRole)<0)ifaces.push(p.bRole);}
+ });
+ });
+ return{roles:roles,pairs:pairs,ifaces:ifaces};
+}
+function renderSearch(){
+ var q=ST.q,srp=document.getElementById('srp');
+ document.getElementById('sc').style.display=q?'block':'none';
+ if(!q||q.length<2){srp.classList.remove('open');srp.innerHTML='';return;}
+ var ql=q.toLowerCase();
+ function hl(s){var i=s.toLowerCase().indexOf(ql);return i<0?esc(s):esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+ql.length))+'</mark>'+esc(s.slice(i+ql.length));}
+ var res=[];RL.forEach(function(r,ri){var mc=OR.filter(function(o){return !emp(r.o[o.k])&&r.o[o.k].toLowerCase().includes(ql);});if(r.n.toLowerCase().includes(ql)||mc.length)res.push({ri:ri,r:r,cl:CL[r.c],mc:mc});});
+ var h='<div class="sri">';if(!res.length){h+='<div class="sr-nil">No contacts match \u201c'+esc(q)+'\u201d</div>';}else{h+='<div class="sr-hd">'+res.length+' role'+(res.length>1?'s':'')+' match</div>';res.forEach(function(x){h+='<div class="sr-row" data-ri="'+x.ri+'"><span class="sr-dot" style="background:'+x.cl.hx+'"></span><div><span style="font-size:12px;font-weight:600;color:#323c2a">'+hl(x.r.n)+'</span><span style="font-size:11px;color:#a3a3a3;margin-left:4px">'+esc(x.cl.name)+'</span>'+(x.mc.length?'<div style="font-size:11px;color:#6b7a5f;margin-top:2px">'+x.mc.map(function(o){return'<span style="color:'+o.hx+';font-weight:600">'+esc(o.l)+':</span>'+hl(x.r.o[o.k]);}).join(' \u00b7')+'</div>':'')+'</div></div>';});}
+ srp.innerHTML=h+'</div>';srp.classList.add('open');srp.querySelectorAll('.sr-row').forEach(function(row){row.addEventListener('click',function(){selR(parseInt(row.dataset.ri));});});
+}
+
+function renderPanel(){
+ var es=document.getElementById('empty-state');
+ if(es)es.style.display=ST.sel===null?'flex':'none';
+ if(ST.sel===null){document.getElementById('panel').style.display='none';return;}
+ var r=RL[ST.sel],cl=CL[r.c];
+ document.getElementById('ptitle').innerHTML='<span class="ptdot" style="background:'+cl.hx+'"></span>'+esc(r.n)+'<span class="ptcl"> \u2014'+esc(cl.name)+'</span>';
+ document.getElementById('cards').innerHTML=OR.map(function(org,oi){
+  if(r.o[org.k]===undefined)return'';
+  var ct=r.o[org.k]||'\u2014',em=emp(ct),hl=ST.org===org.k;
+  var bs='border-left-color:'+cl.hx+';',hs=hl?'background:'+org.lx+';outline:0.5px solid '+org.hx+'40;':'';
+  var valHtml=ST.edit
+   ?'<textarea class="cc-ta" data-ri="'+ST.sel+'" data-oi="'+oi+'">'+esc(ct)+'</textarea><button class="cc-clr" data-ri="'+ST.sel+'" data-oi="'+oi+'">Clear</button>'
+   :'<div class="cc-val">'+esc(ct)+'</div>';
+  return'<div class="cc'+(em?' dim':'')+(hl?' ohl':'')+'" style="'+bs+hs+'"><div class="cc-org" style="color:'+org.hx+'">'+esc(org.l)+'</div>'+valHtml+'</div>';
+ }).join('');
+ if(ST.edit){
+  document.querySelectorAll('.cc-ta').forEach(function(ta){ta.addEventListener('blur',function(){saveContact(parseInt(ta.dataset.ri),parseInt(ta.dataset.oi),ta.value);});});
+  document.querySelectorAll('.cc-clr').forEach(function(btn){btn.addEventListener('click',function(){clearContact(parseInt(btn.dataset.ri),parseInt(btn.dataset.oi));});});
+ }
+ var oldPs=document.getElementById('pair-sect');if(oldPs)oldPs.remove();
+ if(r.pairings!==undefined){document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ST.sel));wirePairings(ST.sel);}
+ document.getElementById('panel').style.display='block';placeBadge();setTimeout(updateBadge,50);
+ setTimeout(function(){document.getElementById('panel').scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+}
+function render(){applyMap();renderPanel();renderSearch();setTimeout(updateBadge,50);}
+function updateBadge(){
+ var badge=document.getElementById('eagle5-badge');
+ if(!badge)return;
+ var panel=document.getElementById('panel');
+ var scen=document.getElementById('scen-bar');
+ var panelH=0;
+ if(panel&&panel.style.display!=='none'){
+  var r=panel.getBoundingClientRect();
+  var fromBottom=window.innerHeight-r.bottom;
+  if(fromBottom<100)panelH=Math.max(0,100-fromBottom);
+ }
+ badge.style.bottom=(20+panelH)+'px';
+}
+
+function selR(ri){ST.sel=ST.sel===ri?null:ri;ST.ci=null;render();}
+function selCl(id){ST.ci=ST.ci===id?null:id;ST.sel=null;render();setTimeout(updateBadge,50);}
+function resetAll(){ST.sel=null;ST.org=null;ST.q='';ST.ci=null;document.getElementById('si').value='';render();}
+
+
+
+
+
+
+var ESC_CHAIN={
+ safety:    [{n:'Pablo Trejo',t:'Safety Lead'},{n:'Neil Brown',t:'PX'}],
+ 'rfi-mep': [{n:'Josh Ghacemi',t:'MEP Lead'},{n:'Neil Brown',t:'PX'}],
+ 'rfi-csa': [{n:'Michael Cargell',t:'CSA Lead'},{n:'Neil Brown',t:'PX'}],
+ schedule:  [{n:'Wayne Pykonen',t:'CM'},{n:'Neil Brown',t:'PX'}],
+ 'design-chg':[{n:'Neil Brown',t:'PX'}],
+ cx:        [{n:'Jose Fernandez Felgueroso',t:'Cx Lead'},{n:'Wayne Pykonen',t:'Sr. CM'},{n:'Neil Brown',t:'PX'}],
+ cost:      [{n:'Nate Chen',t:'Cost Controls'},{n:'Neil Brown',t:'PX'}],
+ qc:        [{n:'Erick Guidry',t:'QA/QC Lead'},{n:'Wayne Pykonen',t:'CM'},{n:'Neil Brown',t:'PX'}],
+ power:     [{n:'Neil Brown',t:'PX'},{n:'Michael McSchaefer',t:'Power Lead'}],
+ environ:   [{n:'Heather Vainisi',t:'Environmental Lead'},{n:'Neil Brown',t:'PX'}],
+ subcon:    [{n:'Tom Pykonen',t:'CM'},{n:'Neil Brown',t:'PX'}],
+};
+var SCEN_TAGS={
+ safety:['Safety / EH&S','CM team','PX','all'],
+ 'rfi-mep':['MEP CM','Controls/SI','Commissioning'],
+ 'rfi-csa':['CSA team','General super','Interiors'],
+ schedule:['Scheduling','CM team','PX'],
+ 'design-chg':['Design lead','Controls/SI','PX','Development','Precon manager'],
+ cx:['Commissioning','CM team','MEP CM'],
+ cost:['Cost controls','CM team','PX'],
+ qc:['QA/QC','CM team','General super'],
+ power:['Power delivery','OFCI'],
+ environ:['Environmental','Safety / EH&S','Sustainability'],
+ subcon:['General super','CM team'],
+};
+var SCENARIOS=[
+ {id:'safety',   icon:'🚨',name:'Site Safety Response',          urgency:'IMMEDIATE',roles:['Safety / EH&S','CM team','PX'],note:'Stop work in affected area if required. Notify all orgs simultaneously. Document time, location, and involved parties immediately.'},
+ {id:'rfi-mep',  icon:'🔧',name:'MEP Coordination Request',      urgency:'SAME DAY', roles:['MEP CM','Design lead','Controls/SI'],note:'Log RFI in Procore before distributing. Confirm RFI number and attach any relevant drawings or photos.'},
+ {id:'rfi-csa',  icon:'🏗',name:'Structural Coordination Request',urgency:'SAME DAY', roles:['CSA team','Design lead','CM team'],note:'Coordinate with GC superintendent on field impact before issuing. Tag correct spec section.'},
+ {id:'schedule', icon:'📅',name:'Schedule Recovery Plan',         urgency:'SAME DAY', roles:['Scheduling','CM team','PX'],note:'Quantify impact in days before escalating. Prepare at least one recovery option. Update P6 baseline first.'},
+ {id:'design-chg',icon:'\u270f\ufe0f',name:'Design Development Request',   urgency:'ROUTINE',  roles:['Design lead','Controls/SI','PX'],note:'Initiate PCO before any field work begins. Confirm scope and cost impact with all design leads across orgs.'},
+ {id:'cx',       icon:'\u26a1',       name:'Commissioning Alignment',       urgency:'SAME DAY', roles:['Commissioning','CM team','Controls/SI'],note:'Document test failure details and system affected. Do not proceed to next test until all orgs aligned on resolution.'},
+ {id:'cost',     icon:'💰', name:'Budget Review & Alignment',     urgency:'ROUTINE',  roles:['Cost controls','PX','CM team'],note:'Prepare a cost impact summary with contingency implications before the meeting. Include potential recovery options.'},
+ {id:'qc',       icon:'🔍', name:'Quality Improvement Action',    urgency:'SAME DAY', roles:['QA/QC','CM team','General super'],note:'Issue NCR immediately. Photograph and document exact location, trade, and time. Do not conceal or repair until disposition approved.'},
+ {id:'power',    icon:'🔌', name:'Power Delivery Coordination',   urgency:'IMMEDIATE',roles:['Power delivery','Controls/SI','CM team'],note:'Confirm scope with utility and Duroc PP1 contacts. Check if ERCOT notification is required. Document outage window.'},
+ {id:'environ',  icon:'🌿', name:'Environmental Response Protocol',urgency:'IMMEDIATE',roles:['Environmental','Safety / EH&S','PX'],note:'Stop work in affected area. TCEQ notification may be required within 24 hours. Preserve evidence and document spill extent.'},
+ {id:'subcon',   icon:'👷', name:'Subcontractor Coordination',     urgency:'ROUTINE',  roles:['General super','CM team','PX'],note:'Document all parties, timeline, and contract references before escalating. Route through GC chain first.'},
+];
+var SCEN_SEL=null,SCEN_OPEN=false;
+
+function toast(msg,duration){
+ var t=document.getElementById('toast');
+ if(!t)return;
+ t.textContent=msg;
+ t.classList.add('show');
+ clearTimeout(toast._t);
+ toast._t=setTimeout(function(){t.classList.remove('show');},duration||2200);
+}
+function showNameBar(){document.getElementById('name-bar').style.display='flex';}
+function confirmName(){
+ var ni=document.getElementById('name-inp'),nm=ni.value.trim();
+ if(!nm){ni.classList.add('err');document.getElementById('name-err').classList.add('show');return;}
+ ni.classList.remove('err');document.getElementById('name-err').classList.remove('show');
+ EN=nm;try{sessionStorage.setItem('zip_editor',nm);}catch(e){}
+ document.getElementById('name-bar').style.display='none';
+ enterEdit();
+}
+function enterEdit(){
+ ST.edit=true;
+ document.getElementById('edit-bar').style.display='flex';
+ document.getElementById('edit-btn').classList.add('on');
+ renderPanel();
+}
+function exitEdit(){
+ ST.edit=false;
+ document.getElementById('edit-bar').style.display='none';
+ document.getElementById('name-bar').style.display='none';
+ document.getElementById('edit-btn').classList.remove('on');
+ if(ST.sel!==null)renderPanel();
+}
+function saveContact(ri,oi,val){
+ var org=OR[oi].k;
+ RL[ri].o[org]=val;
+ var now=new Date().toISOString();
+ LOG.unshift({by:EN||'Unknown',at:now,role:RL[ri].n,org:org,val:val});
+ if(DB){
+  var upd={};upd[DB_ROOT+'/contacts/'+ri+'/'+org]=val;
+  upd[DB_ROOT+'/lastedit']={by:EN||'Unknown',at:now,role:RL[ri].n,org:org};
+  upd[DB_ROOT+'/log']=LOG.slice(0,50);
+  DB.ref().update(upd);
+ }
+ var ac=document.getElementById('act-count');
+ if(ac){ac.textContent=LOG.length;ac.style.display='inline';}
+ if(ACT)renderLog();
+ toast('✓ Saved — '+RL[ri].n+' · '+OR[oi].l);
+ var le=document.getElementById('lastedit');
+ if(le){le.style.display='block';le.textContent='Last edit by '+(EN||'Unknown')+' · '+RL[ri].n+' · '+OR[oi].l+' · just now';}
+}
+function clearContact(ri,oi){
+ saveContact(ri,oi,'—');
+ renderPanel();
+}
+function toggleAct(){
+ ACT=!ACT;
+ document.getElementById('act-wrap').classList.toggle('show',ACT);
+ document.getElementById('act-btn').classList.toggle('on',ACT);
+ renderLog();
+}
+document.addEventListener('click',function(e){
+ if(!ACT)return;
+ var wrap=document.getElementById('act-wrap');
+ var btn=document.getElementById('act-btn');
+ if(wrap&&!wrap.contains(e.target)&&btn&&!btn.contains(e.target)){toggleAct();}
+});
+function renderLog(){
+ var el=document.getElementById('act-log');if(!el)return;
+ if(!LOG.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#9ea597;font-size:12px;">No activity yet.</div>';return;}
+ el.innerHTML=LOG.slice(0,30).map(function(l){
+  var t=new Date(l.at);
+  var tstr=t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return'<div class="al-row"><div class="al-dot"></div><span class="al-badge">'+esc(l.org)+'</span><span class="al-who">'+esc(l.by)+'</span> updated <strong>'+esc(l.role)+'</strong><div class="al-time">'+tstr+'</div></div>';
+ }).join('');
+}
+
+function renderScenDetail(scen){
+ var rl=RL.find(function(r){return r.n===scen.role;})||null;
+ var html='<div class="scen-detail" id="scen-detail">';
+ html+='<div class="scen-dtitle"><span style="font-size:20px;margin-right:8px;">'+scen.icon+'</span>'+esc(scen.name)+'<span class="scen-urg" style="margin-left:10px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:'+(scen.urgency==='IMMEDIATE'?'#FBF0EC':scen.urgency==='SAME DAY'?'#fff9ef':'#dde5ed')+';color:'+(scen.urgency==='IMMEDIATE'?'#A32D2D':scen.urgency==='SAME DAY'?'#ecac45':'#3B6D11')+'">'+esc(scen.urgency)+'</span></div>';
+ if(scen.note)html+='<div class="scen-note">'+esc(scen.note)+'</div>';
+ if(rl){html+='<div class="scen-roles">';OR.forEach(function(org){if(org.k==='MS')return;var ct=rl.o[org.k];if(!ct||emp(ct))return;var first=ct.split(',')[0].trim();html+='<div class="scen-ct"><span class="scen-ct-org" style="color:'+org.hx+'">'+esc(org.l)+'</span><span class="scen-ct-name">'+esc(first)+'</span></div>';});html+='</div>';}
+ var chain=ESC_CHAIN[scen.id];if(chain&&chain.length){html+='<div class="esc-chain"><div class="esc-label">Crusoe escalation path</div><div class="esc-nodes">';chain.forEach(function(e,i){if(i>0)html+='<span class="esc-arrow">›</span>';html+='<div class="esc-card"><div class="esc-name">'+esc(e.n)+'</div><div class="esc-title">'+esc(e.t)+'</div></div>';});html+='</div></div>';}
+return html+'</div>';}
+function renderScenPanel(){var html='<div class="scen-wrap"><div class="scen-grid">';SCENARIOS.forEach(function(s){var uc=s.urgency==='IMMEDIATE'?'#A32D2D':s.urgency==='SAME DAY'?'#ecac45':'#3B6D11',ub=s.urgency==='IMMEDIATE'?'#FBF0EC':s.urgency==='SAME DAY'?'#fff9ef':'#dde5ed';html+='<div class="scen-card'+(SCEN_SEL===s.id?' on':'')+'" data-sid="'+s.id+'"><div class="scen-icon">'+s.icon+'</div><div class="scen-name">'+esc(s.name)+'</div><span class="scen-urg" style="background:'+ub+';color:'+uc+'">'+esc(s.urgency)+'</span></div>';});html+='</div>';if(SCEN_SEL){var scen=SCENARIOS.find(function(s){return s.id===SCEN_SEL;});if(scen)html+=renderScenDetail(scen);}html+='</div>';document.getElementById('scen-bar').innerHTML=html;document.querySelectorAll('.scen-card').forEach(function(card){card.addEventListener('click',function(){SCEN_SEL=SCEN_SEL===card.dataset.sid?null:card.dataset.sid;renderScenPanel();wireScenPanel();});});wireScenPanel();}
+function wireScenPanel(){document.querySelectorAll('#scen-bar .wa-chip').forEach(function(btn){btn.addEventListener('click',function(){selR(parseInt(btn.dataset.ri));});});}
+function toggleScen(){SCEN_OPEN=!SCEN_OPEN;document.getElementById('scen-bar').classList.toggle('open',SCEN_OPEN);document.getElementById('scen-btn').classList.toggle('on',SCEN_OPEN);if(SCEN_OPEN)renderScenPanel();}
+
+var WIZ={open:false,step:1,name:'',org:'',role:'',autoFound:null};
+var ROLE_CHECKLIST={
+ 'Development':     ['Meet Neil Brown and the full CM team on Day 1.','Review Microsoft lease milestones and ABI20/21 delivery obligations.','Attend the next OAC and introduce yourself to all org counterparts.'],
+ 'Precon manager':  ['Review current permit status and open submittals with the CM team.','Get Procore access and review open RFIs and design coordination items.','Meet the design lead team across all orgs to understand open items.'],
+ 'PX':              ['Walk the full site with Wayne Pykonen (Sr. CM) on Day 1.','Review the current schedule baseline and budget status with the CM team.','Set up bilateral cadence meetings with Microsoft, DPR, Southland, and REI leadership.'],
+ 'Design lead':     ['Get Procore access and review the current RFI and submittal log.','Review the latest design drawings and flag open coordination items.','Introduce yourself to Ross Remesz (Crusoe Design Lead) and align on design responsibilities.'],
+ 'Controls/SI':     ['Review the controls and SI specifications with Adam Welles and Brett Hoggatt.','Get Procore access and review the controls submittal log for open items.','Walk the controls rooms and infrastructure areas with your Crusoe counterpart.'],
+ 'Commissioning':   ['Walk the mechanical and electrical areas with Zack Pearson and Jose Fernandez Felgueroso (Cx team) and Wayne Pykonen.','Review the commissioning plan and current Cx status in Procore.','Introduce yourself to the full Cx team across DPR, Southland, and REI.'],
+ 'CM team':         ['Walk the full site with Wayne Pykonen (Sr. CM) on Day 1 to understand current sequencing.','Review the P6 schedule and 3-week look-ahead with Wayne Pykonen.','Locate the site safety plan and introduce yourself to Pablo Trejo.'],
+ 'MEP CM':          ['Walk the MEP areas with Josh Ghacemi and Taylor Slack (Crusoe MEP team) on Day 1.','Review the MEP submittal log in Procore for open items and upcoming deadlines.','Introduce yourself to Abhi Tomar who coordinates OFCI/CFCI and MEP submittals.'],
+ 'CSA team':        ['Walk the structural and civil areas with Michael Cargell (CSA Lead) on Day 1.','Review current shop drawing and submittal status with Tom Pykonen.','Review the structural RFI log for any open coordination items.'],
+ 'Interiors':       ['Walk the interiors scope areas with Tom Pykonen (Crusoe Interiors CM).','Review the interiors submittal log and finish schedule in Procore.','Coordinate with Jarret Griffee (DPR) on any open architectural submittals.'],
+ 'General super':   ['Site safety orientation with Pablo Trejo — mandatory on Day 1.','Walk the full site with Tom Pykonen and Wayne Pykonen to understand current scope areas.','Review the 3-week look-ahead schedule with Wayne Pykonen.'],
+ 'QA/QC':           ['Meet Erick Guidry (Crusoe QA/QC Lead) and review the open NCR log.','Review the site-specific quality plan and inspection hold points.','Walk the active work areas to understand current quality status.'],
+ 'Scheduling':      ['Get P6 access from Lu Becerra or Kola A (Crusoe Scheduling).','Review the current P6 baseline schedule and understand the critical path milestones.','Coordinate with Wayne Pykonen on schedule look-ahead and recovery items.'],
+ 'Telecom / ITIM':  ['Review the telecom and ITIM specifications and drawing package.','Schedule a coordination meeting with Charles Clancy and Awais Zubair (MS ITIM/Telecom).','Walk the telecom rooms and conduit routing with your Crusoe counterpart.'],
+ 'Phys. security':  ['Review the physical security specifications and system design.','Coordinate with Johnny Epps and Grant Goins (Microsoft Security) for access requirements.','Verify security room layouts against current construction drawings.'],
+ 'Network':         ['Review the network specifications and room layouts with the Crusoe IT team.','Coordinate with Juan Rodriguez and Jerome Beckles (MS Network) on technical requirements.','Walk the network rooms and verify current construction status.'],
+ 'OFCI':            ['Review the OFCI/CFCI procurement tracker with Abhi Tomar and Israel Segura.','Confirm delivery schedules and storage plans for all owner-furnished equipment.','Coordinate with Bryan Brooks (MS Sourcing) on any open procurement items.'],
+ 'Power delivery':  ['Meet Michael McSchaefer and Dan Mercier (Crusoe Power Delivery) on Day 1.','Review the power delivery schedule and interface with the Duroc PP1 team.','Confirm ERCOT coordination status and any pending utility approvals.'],
+ 'Safety / EH&S':   ['Meet Pablo Trejo (Crusoe Safety) immediately — mandatory.','Review the site-specific safety plan, emergency action plan, and site rules.','Walk the site with the Crusoe safety team to understand current hazard areas.'],
+ 'Cost controls':   ['Get Procore cost module access from Hemanth Yerra, Nate Chen, and Vivek Kate.','Review the current budget baseline and active change order log.','Meet Joe Opyd and the DPR cost team to align on the change management workflow.'],
+ 'Environmental':   ['Meet Heather Vainisi and Rose Grenen Gallagher (Crusoe Environmental) on Day 1 and review the environmental compliance plan.','Review active TCEQ permits, SWPPP requirements, and site environmental protocols.','Walk the site perimeter and stormwater features with the environmental team.'],
+ 'Sustainability':  ['Meet Hui Wen Chan (Crusoe Sustainability) on Day 1 and review sustainability commitments.','Review the sustainability requirements in the Microsoft lease and project specifications.','Coordinate with the CM team on any sustainability-related construction activities.'],
+};
+// Cluster fallback for roles not explicitly listed
+var WIZ_CHECKLIST={
+ 0:['Meet Neil Brown (PX) and the full CM team on Day 1.','Review Microsoft lease milestones and delivery obligations relevant to your scope.','Attend the next OAC and introduce yourself to all org counterparts.'],
+ 1:['Get Procore access and review the current RFI and submittal log.','Review the latest design drawings and flag any open design issues in your discipline.','Introduce yourself to Ross Remesz (Crusoe Design Lead) to align on responsibilities.'],
+ 2:['Walk the site with your Crusoe CM counterpart on Day 1 to understand current progress.','Review the current P6 schedule and 3-week look-ahead with Wayne Pykonen.','Locate the site safety plan and introduce yourself to Pablo Trejo.'],
+ 3:['Review the OFCI/CFCI procurement tracker with Abhi Tomar to understand status and open items.','Confirm system access credentials and technical requirements with your Crusoe counterpart.','Meet the Power Delivery and Controls teams to understand current commissioning readiness.'],
+ 4:['Get Procore access and review the budget baseline with Hemanth Yerra.','Review the active change order log and understand the PCO/CO approval workflow.','Introduce yourself to the full CM team at the next weekly huddle.'],
+};
+function wizSearch(name){
+ if(!name||name.trim().length<2)return null;
+ var q=name.trim().toLowerCase();var best=null,bestScore=0;
+ RL.forEach(function(r,ri){OR.forEach(function(org){var ct=r.o[org.k]||'';ct.split(',').forEach(function(person){var p=person.trim().toLowerCase().replace(/\(.*?\)/g,'').trim();if(p.length<2)return;var score=0;if(p===q)score=100;else if(p.startsWith(q)||q.startsWith(p))score=80;else if(p.includes(q)||q.includes(p))score=65;else{var qp=q.split(/\s+/),pp=p.split(/\s+/);if(qp.length>=2&&pp.some(function(x){return qp[0]===x||qp[qp.length-1]===x;}))score=50;}if(score>bestScore){bestScore=score;best={ri:ri,r:r,orgK:org.k,orgL:org.l,orgHx:org.hx,contactName:person.trim(),score:score};}});});});
+ return bestScore>=50?best:null;
+}
+// Build counterparts from the actual zippering data — two passes:
+// 1) Crusoe contacts IN the same role node (functional peers)
+// 2) Crusoe CM pairings that target this org/role (coordinators)
+function wizBuildCounterparts(orgK,roleName){
+ var profiles={},order=[];
+ function addPerson(name,ptitle,scope,isPrimary,kind){
+  name=name.trim();
+  if(!name||name==='—'||name==='-')return;
+  if(!profiles[name]){profiles[name]={name:name,ptitle:ptitle||'',scopes:[],isPrimary:isPrimary,kind:kind};order.push(name);}
+  if(scope&&profiles[name].scopes.indexOf(scope)<0)profiles[name].scopes.push(scope);
+  if(isPrimary)profiles[name].isPrimary=true;
+ }
+ // Pass 1: Crusoe people IN the same role node (e.g. MEP CM → Josh Ghacemi, Taylor Slack)
+ var ri=findRI(roleName);
+ if(ri>=0){
+  var ct=RL[ri].o['Crusoe']||'';
+  if(!emp(ct)&&ct!=='—'){
+   ct.split(',').forEach(function(nm){addPerson(nm,'Crusoe '+roleName,roleName,true,'peer');});
+  }
+ }
+ // Pass 2: CM pairings that target this org + role (e.g. Abhi → DPR/MEP CM)
+ RL.forEach(function(r){if(!r.pairings)return;r.pairings.forEach(function(p){
+  if(p.bOrg===orgK&&p.bRole===roleName&&p.person&&p.aOrg==='Crusoe')
+   addPerson(p.person,p.ptitle,p.scope,true,'cm');
+ });});
+ // Pass 3: broader org pairings as fallback (any pairing to this org)
+ if(order.length===0){
+  RL.forEach(function(r){if(!r.pairings)return;r.pairings.forEach(function(p){
+   if(p.bOrg===orgK&&p.person&&p.aOrg==='Crusoe')
+    addPerson(p.person,p.ptitle,p.scope,false,'cm');
+  });});
+ }
+ // Sort: isPrimary first, peers before cm, then scope breadth
+ order.sort(function(a,b){
+  var pa=profiles[a],pb=profiles[b];
+  if(pa.isPrimary!==pb.isPrimary)return pa.isPrimary?-1:1;
+  if(pa.kind!==pb.kind)return pa.kind==='peer'?-1:1;
+  return pb.scopes.length-pa.scopes.length;
+ });
+ return order.slice(0,4).map(function(n){return profiles[n];});
+}
+function wizFindCMs(orgK,roleName){return wizBuildCounterparts(orgK,roleName);}
+function wizFindCM(orgK,roleName){var r=wizFindCMs(orgK,roleName);return r[0]||null;}
+function buildCMProfiles(){
+ var profiles={},order=[];
+ RL.forEach(function(r){if(!r.pairings)return;r.pairings.forEach(function(p){
+  if(p.aOrg==='Crusoe'&&p.person&&p.person!=='CM team'){
+   if(!profiles[p.person]){profiles[p.person]={name:p.person,ptitle:p.ptitle||'',scopes:[]};order.push(p.person);}
+   if(p.scope&&profiles[p.person].scopes.indexOf(p.scope)<0&&p.scope!=='AlphaTech')profiles[p.person].scopes.push(p.scope);
+  }
+ });});
+
+ return order.slice(0,6).map(function(n){return profiles[n];});
+}
+function wizGetEscalation(roleName){
+ var scenMap={
+  'Safety / EH&S':'safety',    'Cost controls':'cost',       'Environmental':'environ',
+  'Sustainability':'environ',   'Power delivery':'power',     'Commissioning':'cx',
+  'Scheduling':'schedule',      'QA/QC':'qc',                 'MEP CM':'rfi-mep',
+  'CSA team':'rfi-csa',         'General super':'rfi-csa',    'Interiors':'rfi-csa',
+  'Design lead':'design-chg',   'Controls/SI':'design-chg',   'Development':'design-chg',
+  'Precon manager':'design-chg','Telecom / ITIM':'rfi-mep',   'Phys. security':'rfi-mep',
+  'Network':'rfi-mep',          'OFCI':'rfi-mep',             'CM team':'schedule',
+  'PX':'power',
+ };
+ var sid=scenMap[roleName];
+ if(sid&&ESC_CHAIN[sid])return ESC_CHAIN[sid];
+ return [{n:'Neil Brown',t:'PX'}];
+}
+function toggleWiz(){WIZ.open=!WIZ.open;document.getElementById('wiz-overlay').classList.toggle('open',WIZ.open);if(WIZ.open){WIZ.step=1;WIZ.name='';WIZ.org='';WIZ.role='';WIZ.autoFound=null;renderWiz();}}
+function renderWiz(){
+ var card=document.getElementById('wiz-card');
+ if(WIZ.step==='result'){renderWizResult();return;}
+ var steps=['','',''];steps[WIZ.step-1]='on';
+ var hdr='<div class="wiz-hdr"><div class="wiz-htitle">New to Eagle 5?</div><div class="wiz-steps"><div class="wiz-step'+steps[0]+'"></div><div class="wiz-step'+steps[1]+'"></div><div class="wiz-step'+steps[2]+'"></div></div></div>';
+ var body='',foot='';
+ if(WIZ.step===1){
+ var sug='';
+ if(WIZ.autoFound){var af=WIZ.autoFound,cl2=CL[af.r.c];sug='<div style="margin-top:10px;padding:10px 12px;background:#ecf0e9;border:1.5px solid #547796;border-radius:10px;display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">\u2713</span><div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#323c2a;">'+esc(af.contactName)+'</div><div style="font-size:11px;color:#3B6D11;font-weight:600;">'+esc(af.orgL)+' \u00b7'+esc(af.r.n)+'</div></div><button id="wiz-thats-me" style="padding:5px 13px;border-radius:8px;border:1.5px solid #547796;background:#547796;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;">That\'s me \u2192</button></div>';}
+ body='<div class="wiz-q">What\'s your name?</div><input class="wiz-inp" id="wiz-name-inp" type="text" placeholder="Start typing \u2014 we\'ll try to find you\u2026" value="'+esc(WIZ.name)+'" maxlength="50" autocomplete="off">'+sug+'<div style="font-size:11px;color:#a3a3a3;margin-top:8px;">Not in the system yet? No problem \u2014 continue below.</div>';
+ foot='<span style="font-size:11px;color:#a3a3a3;">Step 1 of 3</span><button class="wiz-btn-next" id="wiz-next">Next \u2192</button>';
+ } else if(WIZ.step===2){
+ var opts=OR.map(function(o){return'<button class="wiz-opt'+(WIZ.org===o.k?' on':'')+'" data-org="'+o.k+'" style="'+(WIZ.org===o.k?'border-color:'+o.hx+';background:'+o.lx+';':'')+'">'+'<span style="width:10px;height:10px;border-radius:2px;background:'+o.hx+';display:inline-block;flex-shrink:0;"></span>'+esc(o.l)+'</button>';}).join('');
+ body='<div class="wiz-q">Which organization are you with?</div><div class="wiz-opts">'+opts+'</div>';
+ foot='<button class="wiz-btn-back" id="wiz-back">\u2190 Back</button><button class="wiz-btn-next" id="wiz-next">Next \u2192</button>';
+ } else if(WIZ.step===3){
+ var org2=OR.find(function(o){return o.k===WIZ.org;})||{l:WIZ.org,hx:'#888',lx:'#f1f5f8'};
+ var roles=RL.filter(function(r){return r.o[WIZ.org]&&!emp(r.o[WIZ.org]);});
+ var ropts=roles.map(function(r){var cl3=CL[r.c];return'<button class="wiz-opt'+(WIZ.role===r.n?' on':'')+'" data-role="'+esc(r.n)+'" style="'+(WIZ.role===r.n?'border-color:'+cl3.hx+';background:'+cl3.fhx+';':'')+'">'+'<span style="width:8px;height:8px;border-radius:50%;background:'+cl3.hx+';display:inline-block;flex-shrink:0;"></span>'+esc(r.n)+'</button>';}).join('');
+ body='<div class="wiz-q">Which role are you taking on? <span style="color:'+org2.hx+';font-weight:700;">'+esc(org2.l)+'</span></div><div class="wiz-opts" style="max-height:240px;overflow-y:auto;">'+ropts+'</div>';
+ foot='<button class="wiz-btn-back" id="wiz-back">\u2190 Back</button><button class="wiz-btn-next" id="wiz-next">See my plan \u2192</button>';
+ }
+ card.innerHTML=hdr+'<div class="wiz-body">'+body+'</div><div class="wiz-foot">'+foot+'</div>';
+ var ni=document.getElementById('wiz-name-inp');
+ if(ni){
+ ni.focus();
+ ni.addEventListener('input',function(){WIZ.name=this.value;WIZ.autoFound=wizSearch(this.value);renderWiz();var el=document.getElementById('wiz-name-inp');if(el){el.focus();var v=el.value;el.value='';el.value=v;}});
+ ni.addEventListener('keydown',function(e){if(e.key==='Enter')wizNext();});
+ }
+ var tm=document.getElementById('wiz-thats-me');
+ if(tm)tm.addEventListener('click',function(){WIZ.org=WIZ.autoFound.orgK;WIZ.role=WIZ.autoFound.r.n;WIZ.step='result';renderWiz();});
+ document.querySelectorAll('.wiz-opt[data-org]').forEach(function(b){b.addEventListener('click',function(){WIZ.org=b.dataset.org;renderWiz();});});
+ document.querySelectorAll('.wiz-opt[data-role]').forEach(function(b){b.addEventListener('click',function(){WIZ.role=b.dataset.role;renderWiz();});});
+ var nb=document.getElementById('wiz-next');if(nb)nb.addEventListener('click',wizNext);
+ var bb=document.getElementById('wiz-back');if(bb)bb.addEventListener('click',function(){WIZ.step--;renderWiz();});
+}
+function wizNext(){
+ if(WIZ.step===1){if(!WIZ.name.trim()){document.getElementById('wiz-name-inp').style.borderColor='#A32D2D';return;}WIZ.step=2;}
+ else if(WIZ.step===2){if(!WIZ.org)return;WIZ.step=3;}
+ else if(WIZ.step===3){if(!WIZ.role)return;WIZ.step='result';}
+ renderWiz();
+}
+function renderWizResult(){
+ var card=document.getElementById('wiz-card');
+ var ri=findRI(WIZ.role);var r=ri>=0?RL[ri]:null;var cl=r?CL[r.c]:{hx:'#888',fhx:'#f1f5f8',name:'',id:2};
+ var org=OR.find(function(o){return o.k===WIZ.org;})||{l:WIZ.org,hx:'#888',lx:'#f1f5f8'};
+ var cms=wizBuildCounterparts(WIZ.org,WIZ.role);var cm=cms[0]||null;
+ var relScens=SCENARIOS.filter(function(s){var t=SCEN_TAGS[s.id]||[];return t.indexOf('all')>=0||t.indexOf(WIZ.role)>=0;});
+  if(!relScens.find(function(s){return s.id==='safety';})){var ss=SCENARIOS.find(function(s){return s.id==='safety';});if(ss)relScens.unshift(ss);}
+  if(relScens.length<4){SCENARIOS.forEach(function(s){if(relScens.length>=4)return;if(!relScens.find(function(r){return r.id===s.id;}))relScens.push(s);});}
+  relScens=relScens.slice(0,4);
+ var checklist=ROLE_CHECKLIST[WIZ.role]||(WIZ_CHECKLIST[cl.id]||WIZ_CHECKLIST[2]);
+ var firstName=WIZ.name.trim().split(/\s+/)[0];
+ var html='<div class="wiz-result-banner">'+
+'<div style="display:flex;align-items:center;gap:12px;">'+
+'<div style="width:44px;height:44px;border-radius:50%;background:rgba(236,172,69,.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#ceeb13;flex-shrink:0;">'+esc(firstName[0].toUpperCase())+'</div>'+
+'<div><div class="wiz-welcome">Welcome, '+esc(firstName)+'!</div><div style="font-size:11.5px;color:#a3a3a3;margin-top:2px;">'+esc(org.l)+' \u00b7 Eagle 5</div></div></div>'+
+'<span class="wiz-role-pill">'+esc(WIZ.role)+'</span></div>';
+ html+='<div style="padding:10px 20px;background:#FBF0EC;border-bottom:0.5px solid #f0c4b0;display:flex;align-items:center;gap:10px;">'+
+'<span style="font-size:16px;">🚨</span>'+
+'<div><div style="font-size:11.5px;font-weight:700;color:#A32D2D;">Safety emergency</div>'+
+'<div style="font-size:11px;color:#7A2D13;">Pablo Trejo \u00b7 Crusoe Safety</div></div></div>';
+ // Counterpart section — role peers first, then CM coordinators
+if(WIZ.org==='Crusoe'){
+  var teamP=buildCMProfiles();
+  html+='<div class="wiz-rsect"><div class="wiz-rsect-hdr">Eagle 5 CM Team</div>';
+  html+='<div style="font-size:11px;color:#6b7a5f;margin-bottom:8px;">As a Crusoe team member, here is your coordination team.</div>';
+  teamP.forEach(function(p){
+   var isYou=WIZ.name.trim().length>0&&p.name.toLowerCase().includes(WIZ.name.trim().toLowerCase().split(' ')[0]);
+   html+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:0.5px solid #e8e8e8;">'
+    +'<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+(isYou?'#ecac45':'#e8e8e8')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:'+(isYou?'#fff':'#6b7a5f')+';margin-top:1px;">'+esc(p.name.split(' ').map(function(w){return w[0];}).slice(0,2).join(''))+'</div>'
+    +'<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:#323c2a;">'+(isYou?'<span style="color:#ecac45;">You — </span>':'')+esc(p.name)+'</div>'
+    +(p.ptitle?'<div style="font-size:10.5px;color:#9ea597;">'+esc(p.ptitle)+(p.scopes.length?' · '+p.scopes.slice(0,3).join(', '):'')+'</div>':'')
+    +'</div></div>';
+  });
+  html+='</div>';
+} else if(cms.length>0){
+  var peers=cms.filter(function(x){return x.kind==='peer';});
+  var coordinators=cms.filter(function(x){return x.kind==='cm';});
+  html+='<div class="wiz-rsect"><div class="wiz-rsect-hdr">Your Crusoe counterpart'+(cms.length>1?'s':'')+'</div>';
+  if(peers.length>0){
+   if(coordinators.length>0)html+='<div style="font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">Crusoe '+esc(WIZ.role)+' team</div>';
+   peers.forEach(function(cm){
+    html+='<div style="padding:10px 13px;background:#fff9ef;border-radius:9px;border:1px solid #ecac45;margin-bottom:6px;">'
+     +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+     +'<div style="font-size:13px;font-weight:700;color:#323c2a;">'+esc(cm.name)+'</div>'
+     +'<span style="font-size:10px;color:#ecac45;background:#fff;padding:2px 8px;border-radius:6px;border:1px solid #ecac45;font-weight:700;">'+esc(WIZ.role)+'</span>'
+     +'</div>'
+     +'<div style="font-size:11px;color:#6b4c1a;margin-top:3px;">Your functional peer on the Crusoe side</div>'
+     +'</div>';
+   });
+  }
+  if(coordinators.length>0){
+   html+='<div style="font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.4px;text-transform:uppercase;margin:'+(peers.length>0?'10':'0')+'px 0 6px;">CM coordinator'+(coordinators.length>1?'s':'')+'</div>';
+   coordinators.forEach(function(cm){
+    html+='<div style="display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:0.5px solid #e8e8e8;">'
+     +'<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#6b7a5f;">'+esc(cm.name.split(' ').map(function(w){return w[0];}).slice(0,2).join(''))+'</div>'
+     +'<div><div style="font-size:12px;font-weight:600;color:#323c2a;">'+esc(cm.name)+'</div>'
+     +(cm.ptitle?'<div style="font-size:10.5px;color:#9ea597;">'+esc(cm.ptitle)+'</div>':'')
+     +(cm.scopes.length?'<div style="font-size:10.5px;color:#a3a3a3;">'+esc(cm.scopes.slice(0,4).join(' · '))+'</div>':'')
+     +'</div></div>';
+   });
+   html+='<div style="padding-bottom:2px;"></div>';
+  }
+  html+='</div>';
+}
+var escPath=wizGetEscalation(WIZ.role);
+  html+='<div class="wiz-rsect"><div class="wiz-rsect-hdr">Crusoe escalation path</div><div class="esc-nodes">';
+  escPath.forEach(function(e,i){if(i>0)html+='<span class="esc-arrow">\u203a</span>';html+='<div class="esc-card"><div class="esc-name">'+esc(e.n)+'</div><div class="esc-title">'+esc(e.t)+'</div></div>';});
+  html+='</div></div>';
+ if(relScens.length){
+    html+='<div class="wiz-rsect"><div class="wiz-rsect-hdr">Relevant scenarios for your role</div><div class="wiz-scen-list">';
+    relScens.forEach(function(s){
+      var chain=ESC_CHAIN[s.id]||[];
+      var escStr=chain.map(function(e){return e.n.split(' ')[0];}).join(' → ');
+      var uc=s.urgency==='IMMEDIATE'?'#A32D2D':s.urgency==='SAME DAY'?'#ecac45':'#3B6D11';
+      var ub=s.urgency==='IMMEDIATE'?'#FBF0EC':s.urgency==='SAME DAY'?'#fff9ef':'#dde5ed';
+      html+='<div class="wiz-scen-item" data-sid="'+s.id+'">'
+        +'<div class="wiz-si-left"><span class="wiz-si-icon">'+s.icon+'</span>'
+        +'<div><div class="wiz-si-name">'+esc(s.name)+'</div>'
+        +(escStr?'<div class="wiz-si-esc">'+esc(escStr)+'</div>':'')
+        +'</div></div>'
+        +'<span class="wiz-si-urg" style="background:'+ub+';color:'+uc+'">'+esc(s.urgency)+'</span>'
+        +'</div>';
+    });
+    html+='</div></div>';
+  }
+ if(ri>=0){html+='<div class="wiz-rsect" style="border-bottom:none;"><button class="wiz-opt" id="wiz-goto-role" data-ri="'+ri+'" style="border-color:'+cl.hx+'"><span style="width:8px;height:8px;border-radius:50%;background:'+cl.hx+';display:inline-block;flex-shrink:0;"></span>View my role on the map \u2192</button></div>';}
+ html+='<button class="wiz-print" id="wiz-print-btn"> Print my onboarding card</button>';
+ card.innerHTML=html;
+ document.querySelectorAll('.wiz-scen-item').forEach(function(card){card.addEventListener('click',function(){toggleWiz();if(!SCEN_OPEN)toggleScen();SCEN_SEL=card.dataset.sid;renderScenPanel();wireScenPanel();});});
+ var gr=document.getElementById('wiz-goto-role');if(gr)gr.addEventListener('click',function(){toggleWiz();selR(parseInt(gr.dataset.ri));});
+ var pb=document.getElementById('wiz-print-btn');if(pb)pb.addEventListener('click',printWizCard);
+}
+function printWizCard(){
+ var now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+ var ri=findRI(WIZ.role);var r=ri>=0?RL[ri]:null;var cl=r?CL[r.c]:{hx:'#ecac45',fhx:'#fff9ef',name:'',id:2};
+ var org=OR.find(function(o){return o.k===WIZ.org;})||{l:WIZ.org,hx:'#888'};
+ var cms=wizBuildCounterparts(WIZ.org,WIZ.role);var cm=cms[0]||null;
+ var relScens=SCENARIOS.filter(function(s){var t=SCEN_TAGS[s.id]||[];return t.indexOf('all')>=0||t.indexOf(WIZ.role)>=0;});
+  if(!relScens.find(function(s){return s.id==='safety';})){var ss=SCENARIOS.find(function(s){return s.id==='safety';});if(ss)relScens.unshift(ss);}
+  if(relScens.length<4){SCENARIOS.forEach(function(s){if(relScens.length>=4)return;if(!relScens.find(function(r){return r.id===s.id;}))relScens.push(s);});}
+  relScens=relScens.slice(0,4);
+ var checklist=ROLE_CHECKLIST[WIZ.role]||(WIZ_CHECKLIST[cl.id]||WIZ_CHECKLIST[2]);
+ var css='body{font-family:-apple-system,sans-serif;padding:28px;max-width:620px;margin:0 auto;color:#323c2a;font-size:13px;}'+
+'.hdr{background:#323c2a;color:#fff;padding:16px 20px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}'+
+'.av{width:44px;height:44px;border-radius:50%;background:#ecac45;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}'+
+'.nm{font-size:18px;font-weight:700;}.sub{font-size:11px;color:#a3a3a3;margin-top:2px;}.pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:8px;background:rgba(186,117,23,.25);color:#ecac45;font-size:10px;font-weight:700;}'+
+'.em{padding:9px 14px;background:#FBF0EC;border-radius:8px;border-left:3px solid #A32D2D;margin-bottom:14px;}'+
+'.cm{padding:10px 14px;background:#fff9ef;border-radius:8px;border:1px solid #ecac45;margin-bottom:14px;}'+
+'.sh{font-size:10px;font-weight:700;color:#a3a3a3;letter-spacing:.6px;text-transform:uppercase;margin-bottom:7px;}'+
+'.sect{margin-bottom:14px;}'+
+'.row{display:flex;gap:8px;padding:4px 0;border-bottom:0.5px solid #e8e8e8;font-size:12px;}'+
+'.row:last-child{border-bottom:none;}'+
+'.ci{display:flex;gap:8px;margin-bottom:6px;font-size:12px;line-height:1.45;}'+
+'.cn{width:20px;height:20px;min-width:20px;border-radius:50%;background:'+cl.hx+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}'+
+'.esc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}'+
+'.ec{padding:5px 10px;border-radius:6px;background:#ffffff;border:0.5px solid #e8e8e8;font-size:11px;}'+
+'.ec b{display:block;font-weight:700;}.ec s{display:block;color:#a3a3a3;font-size:9px;}'+
+'.chip{display:inline-block;padding:3px 9px;border-radius:6px;border:0.5px solid #e8e8e8;background:#ffffff;font-size:10.5px;margin:2px;}'+
+'.ft{margin-top:16px;font-size:10px;color:#ced2cb;border-top:0.5px solid #e8e8e8;padding-top:8px;display:flex;justify-content:space-between;}'+
+'@media print{button{display:none!important;}}';
+ var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Eagle 5 Onboarding \u2014'+esc(WIZ.name)+'</title><style>'+css+'</style></head><body>';
+ html+='<div class="hdr"><div class="av">'+esc(WIZ.name.trim()[0].toUpperCase())+'</div><div><div class="nm">'+esc(WIZ.name)+'</div><div class="sub">'+esc(org.l)+' \u00b7 Eagle 5 \u00b7 Abilene, TX</div><span class="pill">'+esc(WIZ.role)+'</span></div></div>';
+ html+='<div class="em"><strong style="color:#A32D2D;">🚨 Safety emergency:</strong> Pablo Trejo</div>';
+ if(cm){html+='<div class="cm"><strong style="font-size:14px;">'+esc(cm.name)+'</strong><div style="font-size:11px;color:#6b4c1a;margin-top:2px;">'+esc(cm.ptitle)+(cm.scope?' \u00b7'+esc(cm.scope):'')+' \u00b7 Your day-to-day Crusoe contact</div></div>';}
+ if(r){html+='<div class="sect"><div class="sh">Key contacts by org</div>';OR.forEach(function(o){var ct=r.o[o.k];if(!ct||emp(ct))return;html+='<div class="row"><span style="color:'+o.hx+';font-weight:700;font-size:10px;min-width:64px;">'+esc(o.l)+'</span><span>'+esc(ct.split(',')[0].trim())+'</span></div>';});html+='</div>';}
+ html+='<div class="sect"><div class="sh">Your first week</div>';checklist.forEach(function(item,i){html+='<div class="ci"><div class="cn">'+(i+1)+'</div><div>'+esc(item)+'</div></div>';});html+='</div>';
+ var escPath2=wizGetEscalation(WIZ.role);html+='<div class="sect"><div class="sh">Crusoe escalation path</div><div class="esc">';escPath2.forEach(function(e,i){if(i>0)html+='<span style="color:#ced2cb;">\u203a</span>';html+='<div class="ec"><b>'+esc(e.n)+'</b><s>'+esc(e.t)+'</s></div>';});html+='</div></div>';
+ if(relScens.length){html+='<div class="sect"><div class="sh">Your top scenarios</div>'+relScens.map(function(s){var uc=s.urgency==='IMMEDIATE'?'#A32D2D':s.urgency==='SAME DAY'?'#ecac45':'#3B6D11',ub=s.urgency==='IMMEDIATE'?'#FBF0EC':s.urgency==='SAME DAY'?'#fff9ef':'#dde5ed';return'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #e8e8e8;"><span>'+s.icon+'</span><span style="font-size:12px;font-weight:600;flex:1">'+esc(s.name)+'</span><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:'+ub+';color:'+uc+'">'+esc(s.urgency)+'</span></div>';}).join('')+'</div>';}
+ html+='<div class="ft"><span>Eagle 5 \u00b7 ABI20/21 \u00b7 Abilene, TX \u00b7'+now+'</span><span>Crusoe Energy Systems \u00b7 CONFIDENTIAL</span></div>';
+ html+='<button onclick="window.print()" style="margin-top:12px;padding:8px 20px;background:#ecac45;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;"> Print, Save as PDF</button>';
+ html+='</body></html>';
+ var w=window.open('','_blank','width=680,height=900');w.document.write(html);w.document.close();
+}
+
+
+document.getElementById('wiz-btn').addEventListener('click',toggleWiz);
+document.getElementById('wiz-overlay').addEventListener('click',function(e){if(e.target===this)toggleWiz();});
+function placeBadge(){
+ var b=document.getElementById('eagle5-badge');if(!b)return;
+ var panel=document.getElementById('panel');
+ var pw=document.getElementById('panel-wrap');
+ var main=document.getElementById('main');
+ if(panel&&panel.style.display!=='none'&&pw&&pw.parentNode){
+  if(b.previousSibling!==pw)pw.parentNode.insertBefore(b,pw.nextSibling);
+ } else if(main){
+  main.appendChild(b);
+ }
+}
+document.getElementById('scen-btn').addEventListener('click',toggleScen);
+document.getElementById('edit-btn').addEventListener('click',function(){
+ if(ST.edit){exitEdit();return;}
+ var saved=null;try{saved=sessionStorage.getItem('zip_editor');}catch(e){}
+ if(saved){EN=saved;enterEdit();}else{showNameBar();}
+});
+document.getElementById('act-btn').addEventListener('click',toggleAct);
+document.getElementById('name-ok').addEventListener('click',confirmName);
+document.getElementById('name-inp').addEventListener('keydown',function(ev){if(ev.key==='Enter')confirmName();});
+document.getElementById('done-btn').addEventListener('click',exitEdit);
+document.getElementById('name-cancel').addEventListener('click',function(){document.getElementById('name-bar').style.display='none';});
+
+
+
+
+document.getElementById('sc').addEventListener('click',function(){ST.q='';document.getElementById('si').value='';render();});
+document.getElementById('ctr-node').addEventListener('click',resetAll);
+document.querySelectorAll('.ob').forEach(function(b){b.addEventListener('click',function(){ST.org=ST.org===b.dataset.k?null:b.dataset.k;ST.sel=null;render();setTimeout(updateBadge,50);});});
+document.querySelectorAll('.rg').forEach(function(g){g.style.cursor='pointer';g.addEventListener('click',function(){selR(parseInt(g.dataset.ri));});});
+document.querySelectorAll('.clg').forEach(function(g){g.addEventListener('click',function(){selCl(parseInt(g.dataset.ci));});});
+if(DB){
+  DB.ref(DB_ROOT+'/contacts').on('value',function(snap){
+   var d=snap.val();if(!d)return;
+   Object.keys(d).forEach(function(ri){if(d[ri])Object.keys(d[ri]).forEach(function(org){RL[parseInt(ri)].o[org]=d[ri][org];});});
+   if(ST.sel!==null)renderPanel();
+  });
+  DB.ref(DB_ROOT+'/pairings').on('value',function(snap){
+   var d=snap.val();if(!d)return;
+   Object.keys(d).forEach(function(ri){if(d[ri])RL[parseInt(ri)].pairings=d[ri];});
+   if(ST.sel!==null)renderPanel();
+  });
+  DB.ref(DB_ROOT+'/lastedit').on('value',function(snap){
+   var d=snap.val();if(!d)return;
+   LE=d;toast('✓ Saved — '+RL[ri].n+' · '+OR[oi].l);
+ var le=document.getElementById('lastedit');
+   if(le){le.style.display='block';le.textContent='Last edit by '+d.by+' · '+d.role+' · '+d.org+' · '+new Date(d.at).toLocaleString();}
+  });
+  DB.ref(DB_ROOT+'/log').on('value',function(snap){
+   var d=snap.val();if(!d)return;
+   LOG=Array.isArray(d)?d:Object.values(d);
+   var el=document.getElementById('act-count');if(el&&LOG.length)el.textContent=LOG.length;
+   if(ACT)renderLog();
+  });
+}
+
+/* ── Help modal ─── */
+var HELP_OPEN=false;
+function toggleHelp(){HELP_OPEN=!HELP_OPEN;document.getElementById('help-modal').classList.toggle('open',HELP_OPEN);}
+var _hb=document.getElementById('help-btn');if(_hb)_hb.addEventListener('click',toggleHelp);
+var _hc=document.getElementById('help-close');if(_hc)_hc.addEventListener('click',toggleHelp);
+document.addEventListener('click',function(e){
+ if(!HELP_OPEN)return;
+ var card=document.getElementById('help-card');
+ var btn=document.getElementById('help-btn');
+ if(card&&!card.contains(e.target)&&btn&&!btn.contains(e.target)){toggleHelp();}
+});
+
+ 
+
+/* ── Fullscreen ─── */
+
+/* ── Recent roles ─── */
+
+/* ── Copy contacts on card click ─── */
+var _ca=document.getElementById('cards');if(_ca)_ca.addEventListener('click',function(e){
+ var cc=e.target.closest('.cc');
+ if(!cc||e.target.tagName==='BUTTON'||e.target.tagName==='TEXTAREA')return;
+ var val=cc.querySelector('.cc-val');
+ if(!val||!val.textContent)return;
+ navigator.clipboard&&navigator.clipboard.writeText(val.textContent).then(function(){
+  cc.classList.add('copied');
+  setTimeout(function(){cc.classList.remove('copied');},600);
+  toast('Copied: '+val.textContent.split(',')[0].trim());
+ });
+});
+
+/* ── ? shortcut ─── */
+
+document.addEventListener('keydown',function(ev){
+ var ii=document.activeElement&&(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA');
+ if(ev.key==='Escape'){
+  if(HELP_OPEN)toggleHelp();
+  else if(WIZ.open)toggleWiz();
+  else if(document.getElementById('name-bar').style.display!=='none')document.getElementById('name-bar').style.display='none';
+  else if(ST.edit)exitEdit();
+  else if(ST.org!==null){ST.org=null;render();}
+  else if(ST.sel!==null){ST.sel=null;render();setTimeout(updateBadge,50);}
+ }
+ if(!ii&&ev.key==='ArrowRight'){ev.preventDefault();selR((ST.sel===null?-1:ST.sel)+1<RL.length?(ST.sel===null?0:ST.sel+1):0);}
+ if(!ii&&ev.key==='ArrowLeft'){ev.preventDefault();selR(ST.sel===null||ST.sel===0?RL.length-1:ST.sel-1);}
+ if(!ii&&(ev.ctrlKey||ev.metaKey)&&ev.key==='e'){ev.preventDefault();document.getElementById('edit-btn').click();}
+ if(!ii&&ev.key==='f'){document.getElementById('si').focus();ev.preventDefault();}
+ if(!ii&&ev.key==='/'){document.getElementById('si').focus();ev.preventDefault();}
+ if(!ii&&ev.key==='r'){resetAll();}
+ if(!ii&&ev.key==='?'){toggleHelp();}
+});
+</script>
+
+<div id="toast"></div>
+</body><div id="help-modal">
+ <div id="help-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;"><h2 style="margin-bottom:0;">⌨ Keyboard Shortcuts</h2><button onclick="toggleHelp()" style="width:28px;height:28px;border-radius:50%;border:1px solid #eaeaea;background:#f4f5f1;cursor:pointer;font-size:16px;line-height:1;color:#6b7a5f;display:flex;align-items:center;justify-content:center;">×</button></div>
+  <div class="hk-grid">
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">→</span><span class="hk-key">←</span></div><span>Browse roles</span></div>
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">F</span></div><span>Focus search</span></div>
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">R</span></div><span>Reset map</span></div>
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">Esc</span></div><span>Close / deselect</span></div>
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">⌘E</span></div><span>Toggle edit</span></div>
+   <div class="hk-row"><div class="hk-keys"><span class="hk-key">?</span></div><span>This help</span></div>
+  </div>
+  <button id="help-close">Got it</button>
+ </div>
+</div>
+<div id="eagle5-badge"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCADIAMgDASIAAhEBAxEB/8QAHAABAAEFAQEAAAAAAAAAAAAAAAUCAwQGBwEI/8QASBAAAQMCAwUFBQQGBwcFAAAAAQACAwQRBRIhBhMxQVEHFGGBkSIyUnGhQlOxwRUjYtHh8BYXM1SCksJDRXOTotLxJHJ0g7L/xAAZAQEAAwEBAAAAAAAAAAAAAAAAAgMEAQX/xAAqEQACAgEDBAICAQUBAAAAAAAAAQIRAwQSIRMxQVEUYSIygQUjYqHwkf/aAAwDAQACEQMRAD8A7wiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIrbpDmyRtzv6ch80BWSGi5IA6lWxKX/ANlG5/jwHqqKmSloKd1XiNRGxjOLpDZo+Q6/VahinaGbujwmlBHAT1AIHkwa+pHyUZTUe5OGOU3+KN0EU7vekazwa2/1KsTzUNKf/V4gyPrvJms/cuT1uN4riJPe8RqHtP2GO3bP8rbfW6jhGwG4Y2/W2qpeoXhGmOkflnXTjezoNjjVJf8A+WP3q/DX4RUkCmxWB5PJlS135rjq8cxrvea0/MXUfkfRL4a9ncNxIBdk9x+22/1CpLpY/wC0iuPiYb/TiuM0lbV0Dr0dXUU/hFIQPTh9Fs2G9oGI0xDK+GOsj5vYBHIP9J+isjni+5VLSzXbk6EyRkguxwKqUdhuLYXj8Zko5/1zR7TD7MjPmOnqFmFz4TaaxbykHDz6K5OzO01wy6iIhwIiIAiIgCIiAIiIAiIgCIrcjnaMZ77tB4eKAEukk3UZtb3nfD/FRWPbRUezdM2Jrd9WPF44AdT+048h48+S92hxyHZvDRkaJKuW4hjcfedzc7wHPyHNcpnnmqqiSoqJXSzyuzPkdxcfyHQclTly7eF3NGDB1Hb7F/EcSrMWqu810xlePcaNGR+DW8vnxPVYqIsbbbtnoqKiqQREXCQREQBERAVRySQzMmhkfFKw3ZIw2c35FdC2a20bWuZQYsWMqHezHNazJT0I+y76Hw4LnaEAggi4PEFWQyODKsuGORc9ztjmmmNxcw//AI/grvFafsZtQ6py4TiEmaYC0ErjcyAfZP7QHPmPEa7WBuJN3/s3e4engtsZKStHlzg4OmXURFIiEREAREQBERAEREA4Kzv4qalmr6l4ZE1heXO+ywa3/NezXc1sY4yHL5c/otL7UMX7thlNhELrOqjnlA5Rttp5ut6FcbpE4Qc5KKNPxbHP0zictdM/Ln0jjP8As4xwb8+Z8SVhd5h+8CiczvBMzvBZHC3bZ68Y7VSRLd5h+8Cd5h+8CiczvBMzvBc6a9kqfolu8w/eBO8w/eBROZ3gmZ3gnTXsU/RLd5h+8Cd5h+8CiczvBMzvBOmvYp+iW7zD94E7zD94FE5neCZneCdNexX0S3eYfvAneYfvAonM7wTM7wTpr2K+iXbVxse17Jsj2kOa5uhaRqCPEFde2cxmPaTAWzZmioYd3MG/ZkHMeB0I+a4Vmd4LbOzzGXYbtMymkdaCuG5cOQeNWH8R5hW4ltfczanFujuS5R12J5fGCRZw0cOhVaocN3VEcpBfzHH8lWtB5gREQBERAEREAREQFDPaq/BjPqf/AAuI7eVkmJ7ZVzw79XTkUzBfgGDX/qLl2+C28ncToCB6BfO09T3momqHOu6WR8h/xOJ/NU55NLg9H+nQjLI3LwjF3L+o9U3L+o9VfzN6pmb1WXfM9nbD2WNy/qPVNy/qPVX8zeqZm9U3zG2Hssbl/Ueqbl/Ueqv5m9UzN6pvmNsPZY3D+o9VTIzdRl73ta0cSSrk9VDTRGSV9hwAAuXHoBzKxmb84jSSVVOQ0yFoY5vsRnTQm+ryD0sF1Sl5M+fLjxL2yWo9m8Zrw4wUsbQ0AnfThhFxcaC/JZo2Hx888Ob853n8GKD/AKysfpwIIW0TIovYY3cE2A81UO1LaAcY6A//AEH/ALl1w1D7Ued81eyTOymKCOWQVeFFsLskhNQ9gaehJYqJNlsdiIHdIZSRcCGrY4kdQDYlYQ7VMd4SU2HvHQxu/wC5ZEfarWbxr58GonvaLNc17mkDwJvZc26heEFrV7/0YdRTVFG8MrIZaV50AnYWX+ROh8ivY2zwSsmidaWNwew34OBuPqFNN7V6WeJ0VZgkhjcLOa2ZrwfJwUHHieHVldO3Do5oqdoa5jJgLjSzhppa4v5peVd1RrwanHleyXk+i4qtldhdHiEfuytZKPk4fxWUtZ2Im7z2f0etzEySP/K8gfQBbK03aD1C3J2rPFnHbJr0eoiLpEIiIAiIgColeWRkt94kAfMqtUStL4yBx0I+YQEZjWO4Ts7SbqtrQyeoDt1Fq+SV1rXDRrbhrwC+fmODWtZI2Vj2gAh8ThY+i+jaqgw7GWOjr6CKYs0tNGHFt+h/cvmmStxHDqyem7087mV8ZZMM49lxHPXl1VOW/Bs0m63tMvPF960fM2VbWh3uuDvlqrUW0HKpomu/ahdb6H96tQ4nBU40WzbiCi5CpgZrYfERxJ8eSouXo2dSS/aJVXVDaKmkmdrkbmseJuQAB4kn0B6KIbtLFa8lPI0cyFPmVr6Bu8wiJ9HU/rLwsJdYE5b3J5a6W4rCbQ4FNPEyOnqy9z2tMdjbjre5tZSjNeUZ8mXK3cOxkmSNhLZZGMcDYgvHQHTroQrjoqg0z54aSpmY0XLmxODRrbVxFgNVumIQ1c1Jn2RqMOjrGAmSOalbvZPEOPA+VvELmmIbSbXOxDuWMV9WG5w2amcBGC2+oIA4FQxylk7Ep6lxVUZk9TBgMYq8QY2oxJxIijb7sXgDy8TxKxKOY1mM0VbJUsM0zbupm39m4HtdLcuuihMUq5MRYa2UNa+aUOIbwF2DRbVgFBSSUmH1RiG+DGDOCb2yuP5BTktsbfcx7nORqL3DO43HvHn4qnM34h6rteA4zhkdLLTzSRvZG+zQynLwzTUXa0j+Ss2pq9nagxuEtAyRjrje02hBFiCC0fyFH5bTraSWkbVpnCLjqEXcTHs3N7zNnH/NjWrz9CbMz/7vwB9/gkA/BPmLzE58SXs4es3CZd1icNzYSXjPnw+oC7Gdjdm5gbYNQm/OKocFYk7OMEkoCIKJ0VaI/wBXIyZ5AkA9k2JsdbI9ZBqmmdhp5wkpX2Nw7ONNhiDe2+n9LrbY/wCyZf4QtW7PopYeziidM0tmlZJI8OFiC57tFtTdGgeC2R7FWR3Nv7PURF0gEREAREQBERAUMOWrI+Nn1H/lfPXaJhpwzbrEmWsyoeKlmnEPFz/1By+g5jkySj7Drn5c1onargjamkpMYYy5gO5mI+Bx9k+TtP8AEoZP1NWjntype+Dh68cLtIBtcWU/3ePond4+iy9SJ7nSkYFNiO4jaxktXTBoAtGWys8g6xCuU2PVcVQX1BFRFfQFoa5o6i2l/BZfd4+id3j6KO6BT8JExS1dPXRiWnkzZTyNnMP4grKr3Mxaj7ticDKstH6moPszRH/3DiP51WsyPFDJDURsJeJGtsDq4HloFlbjEsS/t7U8J+y4f6ef+I+SrcVdow5sTxS2sj30GCwtyGATMhdpmm/Vi3sjM7npyF1UwT1tSIIIWiIFpDS0xwtblP2fed52B6KVo8OpqeYyOG8kaDaSXXL7R4cm+SvVtduohuHNdI52W51A0vfxUnIoSS7FdFTNoY3vqqqSRtmNtvnQRR3e1t7M4NGYnmdFP0NHRSy4gyWukc2iYyR0tFiMz2WIcbHNzAb9QsDAozioALZWOfE2RskMjWuY5rmuBF782jipqpnp2VtXQYg6tqKvFGtjkkkcy7m5S1oBaAG8T5lVylHa15LIOdqnwaaNsNm38Ztomg8CZGP/ABKq/pFsrL72I4w3/iUkT/8ASVLf1ZYL9xio+VRGfyViTsxwt0ojh/TWctzZWMjksOF9FNPA3Ssi551y6MD9J7JSf77nb/xMLYfwapSDC6GqpYqnD8RmqopGOkBp8Lc8ta02JcG2I10WAey6leCYq7Em2JBD6RhIINiCMwUvLgkOF4bT0bXyMYKQ0cc87pYXse5znF7d2bOJzXyn4R4p/atJSf8A38HVkzVykdD2MY2PYtkDZxPHHvQyQMLbtJLhoSbaOWxMN2NPgFA7ITUr8FOGxiSOeAHfRSRljmh5dlOvEWFrjTRTcDi6BhPEC3pot+P9UY5/sy4iIpkQiIgCIiAIiIAQCCDwKxpKWHEMPqMNq2Z4nsMb2n7TCP59Fkq3I1wLZWD228uo5hAfPeOYXV4DjE+HVLnF0Rux/wB4w+64fMfUEKP3j/iK7rtjsvDtThTZYMra+AEwPdpfqx3gfodeq4fPG+mqJIKiB0U0Ti18bxYtI5FZ5QSZ7ulz9WPL5Ra3j/iKbx/xFe52fAmdnwKFI11/kewTZK2ldJIGsEupcbAeyVJS4k2PGqak3jN1NC917j3gRbX5XUZmYeLAo3EsObVhjqdsccjeOlg4eS44KT5MWqwOX5xdv0bLNUwMilMkjWs4XJtf276eShdpcTY1kpppGyybs5QxwNr2BOnTVR2HYZJT1gmnERa1pADTe5PzClJY4ZoJIjGA17S02A5osaT72UY9JKcLk6foicC2uxrAIo4qR9O9gZlbvos1hxtxCu4l2h4zV1bTURUTnNYAA2NwFtf2uKjf0TWscWiIOtpma8AHx14KXpMOgZQ7mqgjlc52d2YXAPQK2UcV3Rmw6fNN7W6Rht26rx71NSnyePzWbQdo+N01SO4Qhk7xltFI4Fw487q27AcLcb93e3wbIQsumpKKibaCmYy2uY6n1Oq5WNcpGiOhyN/nNV/30WR2k4lI8vkhLnOOZxFS8Ekm5+pWz7KVuI7c4u7CmZI91EagvmlfI0ZSBw6+1xUNTdj+09fBHiFFT0/dZjnjjmm3cmXlcEcOngurdlnZ/V7IR1tfiroe/VIEYZE7MI4wbm55kn6AKfRxvmjA5zjKr7G2YHhM2FmsqqyWJ00+QERXysYwGw11JuXHzUjACIG3FidbfNUsbvryvLnAuJa0nQDlorysjFRVIg227YREXTgREQBERAEREAREQFv2oXmRgJaffYPxHitc2s2Lo9qYBV072QYg1tmTW0ePheOnjxH0Wzq2WOY8viIa48Wng5caslGTi90T55xDBq3Cqx1JXU8kMzdcp1Dh1aeBHiFjd3d8LvRfQ1fQ4djVP3TEqZjxxDX8QerXDgfktCxnszrIS6XB6ps8fEQVBDXj5O4Hzt81nnjmv1PXwa7HLjJw/wDRzbu7vhd6J3d3wu9FKV+HYlhby2vop6bxkjOU/Jw0PqsMSl3ukH5arO5zXc9GMYSVxdmP3d3wu9E7u74Xeiyc7/5C8zuHFc6kjvTRj93d8LvRO7u+F3osynZUVcoipYpJ5DwZCwvPoFteE9nuOYgWvqwzD4DxMvtSW8Gg6eZCnF5JdkU5MmHH+7NJbSve9rGse5zjla1rblx6Acyul7Hdm+6kjxLHYwXNs6KjdYgHkZORP7PDrfgNuwbZjB9mmh8MZkqiLGeX2pHeA6DwFlKu3k/vjJH8HM/P9y1QxtcyPJ1Os3/jj4R66Z8rrQOAYOLyL38B+9eGN79JZXOHwgWCuAACwFgitMAREQBERAEREAREQBERAFjudA2lkqqp5ETbk6mzQD4K+TYEnko7Fp20eytVUSBhEcDpLPFwTxFx87LjdKyUVukkZFPNh1WQKWraXm/ssk10NjoehV0GZlw+JzgD7zSNR1suXYDj201fJPVYNgmHve2zJXsYRx1tq9bzszV7TVUtQceo6eljaAIhHxcef2jooRnu8GjNpnjvlcffJLkumbbuz3NPxWH4qm9RCLtbIG9HWeB+agtuNqpNm6OnFIYnVkz/AGWSNzDIOJNiPBY+we1lftK6ubXRwNMGQs3TSL3ve9yei7vW7aQ+Pk6XV8G0RVT5yGmmc5jtM4tl+qxarZjA6wk1GE0T3Hi7ctB9QoPbLbgbOSx0dJAyete3OQ8nKwcr21JPRRkWN9oc0bZGYHTBrhcZm5T6F91xzjddycNNk2qdpJ+3RsR2D2ZJv+iIfJzh+avw7IbO0ntswajJGvtRZz9bryPEMSpdkZa/FWQwV0cL5HsYLtaRfKOOvLmofYPanFdpZK01sVO2GAMAMTSDmN9NSeQS42lRzblcJS3cL7NmglbHCG0WHubHyAa2Ien8F6XV0nGLdjoxwJ9SozbPHZ9n8BNZTbszmVrGNkbcG/HmOS1TD9p9u8Vo2VdFhNJLA8kNeG2vY2PF668iTo5j005w32kvt0b80bm7nQPb1eSHepV1zwwAm5vwA1JUdgM+Mz4TJLj1PDT1Bc60cfJluep14rMpDvJGG4O7jHqf4BSTtWUyjtbRXmmPCnd5uAXt5v7uf84WiY9tvjMO1kmC4NTU0xa4RtD2kuc+1zrcBZ+F4ht1UYlDFXYZSU9KSd5LYHKLHo887KCyJvgvelmo7pNLi+5te9IIEkb2X0BPD1VxWnCoGHvFU6N0vWNpA8OKu8lYZgiIgCIiAIiIAiIgLVRfclo4uIaPNav2m1vdNk+7NNnVMrYwP2RqfwC2l2tRC3lcu9AuYdrNeJMUoaEOFoYjIRfm42H0CqzOomvRQ354/XJjbKT7X4dhF8HwiOalneZBK9gJceHxDTRdNw2trINnWVuOiOnqGxukna0WDACdOJ5WWkYb2m4PhmFUtEygqyKeFsdwWa2HHirW3O0dRikOH4DSs3dTVtjknizcC6xYwnzBKgpKMeHZpy4smbJUoKNvv5oxcLB2ux/E8eri1tNTRPbTxvcPeynKPIanxIV3sjdatxNvWGM/UqUd2V4VFQl8lXVunbHd2VzcpcByFuF1B9lTs2K4nE1wD30gtrzzfxUUnGSstnOGTBk2PhV/BYwwf0n7UTPJ7cLZ3S2OoyR6NHqApjaDbHazA6uQz0FNBSvle2B0jLlzR8ndFrOzOMDYzaWpdidJKXbt0L2iwc05gbi/EaLK2kx6PbjaDDKSihlZDmEQa+2YlzhmNhyACinUeHyWyxXlVxuCXc2vbDF6k9m9PJVBjKqvbG17WaAX9o28gsvsxoe7bKCoLbOqpnSX8B7I/ArW+1esa2qw3DYyGthiMmW/X2R9AVl4J2i4dR4ZQYTSYdVSTMYyBgLmgOfoOt+KsUksjbMzxTlpUoLu7KO1qu9rDqAHhmmcPoPzVvCKvbzDcJpqOiwSLu8bLRmRgub63Pt+Kg9tsShqdvZXz3fT0r44nNaRchti4C/iStxh7UqCqnipqXDap88r2xxtc5gBJNhexKimnJtuixwnHBCMYbvLs2jEcdocDoad+M1DInSjIbMLg51va0F9FVguN4VjUcz8KlbI2IgPtGWWJGnEBXMUosLrGxjE6WCcMuWCWPNbrZR2J1WG7G4DNXUlDCyIvZeOIBmckgetle21y+x5kVCaUYp7n/4aM3ZXbGm2imxqmpqbvLpZHtL5WOtmvyPgVLbGbaYtiePuwnFI4nOyvIexmVzHN4g20IVNR2tUHd392w+oM1jk3jmht/GxWP2YYTUyV1ZjlTGQ2Rpjic4Wzlxu4jw0A81TGlJKDPRyKTwylnik1wvZ0MtDquQuJOXKWgnQadFdVuM55Zn8i6w8tFcWk8gIiIAiIgCIiAIiICh4dmY9ou5hvbqrcvdpnZpqPO61ruiDj6q+iC6MXdUH9wb/AMgKt4pZZM76PO/4nQgn1V9EO2ynvL7607snzF/RWoxTQvL4qLK/hdsQafVX0Q5ZjzspamxqaESEcN5E19lTBDQ0z89Ph7Y39Y4GtPqspEo7bqixL3adwdNRl7gLAviDjZUtZRxvD2UIa4agtgAIWSiC2Yz2Ucji+ShDnHUl0IJ9UYyjjeHx0Ia8cC2EAjzWSiULZbIdM8ue3KMpa1t9deJVJcDCIain3jQAPdDgbeCvIhwxd1Qf3Bv/ACAr5lke3JHGYxwzOtoPAKtEOtt9zxjQxga3gAvURDgREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREB//2Q==" alt="Eagle 5"></div>
+</html>
