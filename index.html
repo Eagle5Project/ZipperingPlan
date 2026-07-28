@@ -460,7 +460,7 @@ var OR=[
  {k:'MS', l:'Microsoft', hx:'#323c2a',lx:'#ecf0e9'},
  {k:'SL', l:'Southland', hx:'#9ea597',lx:'#ecf0e9'},
  {k:'REI', l:'REI', hx:'#779ab6',lx:'#f1f5f8'},
- {k:'AT', l:'AlphaTech', hx:'#a3a3a3',lx:'#e8e8e8'},
+ {k:'AT', l:'AlfaTech', hx:'#a3a3a3',lx:'#e8e8e8'},
  {k:'RSN', l:'Rosendin', hx:'#6b7a5f',lx:'#ecf0e9'},
 ];
 var PT={
@@ -528,10 +528,10 @@ var RL=[
  {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Ethan Freer, Jarrod McPhetridge', bOrg:'DPR', bRole:'MEP CM'},
  {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Wes Denton', bOrg:'DPR', bRole:'MEP CM'},
  {person:'Abhi Tomar',ptitle:'CM',scope:'MEP Submittals', type:'SUBM',a:'Abhi Tomar',aOrg:'Crusoe',b:'Alex Stewart', bOrg:'DPR', bRole:'MEP CM'},
- {person:'Tom Pykonen', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Tom Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
- {person:'Wayne Pykonen', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Wayne Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
- {person:'Hemanth Yerra', ptitle:'CM', scope:'AlphaTech',type:'OVR',a:'Hemanth Yerra', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
- {person:'Abhi Tomar', ptitle:'CM',scope:'AlphaTech',type:'OVR',a:'Abhi Tomar', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Tom Pykonen', ptitle:'CM',scope:'AlfaTech',type:'OVR',a:'Tom Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Wayne Pykonen', ptitle:'CM',scope:'AlfaTech',type:'OVR',a:'Wayne Pykonen', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Hemanth Yerra', ptitle:'CM', scope:'AlfaTech',type:'OVR',a:'Hemanth Yerra', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
+ {person:'Abhi Tomar', ptitle:'CM',scope:'AlfaTech',type:'OVR',a:'Abhi Tomar', aOrg:'Crusoe',b:'Kate Gale',bOrg:'AT',bRole:'Design lead'},
  ]},
  {n:'MEP CM',c:2,o:{Crusoe:'Josh Ghacemi, Taylor Slack',DPR:'Vic Bonin, Joe Arismendez, Ethan Freer (B9 MEP Lead), Jarrod McPhetridge (B10 MEP Lead)',MS:'Ashley Montufar, Klara Mekhael, Brandon Ferrier',SL:'Travis Phillips',REI:'Jacob Pusich, Bracken White, John Messec, Paul Gotfried'}},
  {n:'CSA team',c:2,o:{Crusoe:'Michael Cargell, Dane Armand',DPR:'Jacqueline Jordan, Luke Dowdy, Tristan LeBaron, Ankur Rana, Minh Phan, Westley Francis',MS:'Emilio Guzman',SL:'—',REI:'N/A'}},
@@ -1218,7 +1218,7 @@ function buildCMProfiles(){
  RL.forEach(function(r){if(!r.pairings)return;r.pairings.forEach(function(p){
   if(p.aOrg==='Crusoe'&&p.person&&p.person!=='CM team'){
    if(!profiles[p.person]){profiles[p.person]={name:p.person,ptitle:p.ptitle||'',scopes:[]};order.push(p.person);}
-   if(p.scope&&profiles[p.person].scopes.indexOf(p.scope)<0&&p.scope!=='AlphaTech')profiles[p.person].scopes.push(p.scope);
+   if(p.scope&&profiles[p.person].scopes.indexOf(p.scope)<0&&p.scope!=='AlfaTech')profiles[p.person].scopes.push(p.scope);
   }
  });});
 
