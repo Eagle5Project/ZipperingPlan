@@ -362,6 +362,9 @@ header{margin-top:3px;}
 
 /* ── Help button in toolbar ────────────────────── */
 
+
+.cc-save{width:28px;height:28px;border-radius:6px;background:#323c2a;color:#ceeb13;border:none;font-size:14px;cursor:pointer;flex-shrink:0;font-weight:700;transition:all .15s;margin-top:1px;}
+.cc-save:hover{background:#1e2418;}
 </style>
 </head>
 <body>
@@ -408,7 +411,8 @@ header{margin-top:3px;}
  <span id="name-err">Please enter your name.</span>
 </div>
 <div class="banner" id="edit-bar" style="display:none;">
- <span class="bnote">Edit mode — click any contact field to update it</span>
+ <span class="bnote">Edit mode — update any field then click Save or click away</span>
+ <button class="obtn" id="save-all-btn">✓ Save All</button>
  <button class="abtn" id="done-btn">✕ Cancel Edit</button>
 </div>
 <div class="lastedit" id="lastedit" style="display:none;"></div>
@@ -947,13 +951,14 @@ function renderPanel(){
   var ct=r.o[org.k]||'\u2014',em=emp(ct),hl=ST.org===org.k;
   var bs='border-left-color:'+cl.hx+';',hs=hl?'background:'+org.lx+';outline:0.5px solid '+org.hx+'40;':'';
   var valHtml=ST.edit
-   ?'<textarea class="cc-ta" data-ri="'+ST.sel+'" data-oi="'+oi+'">'+esc(ct)+'</textarea><button class="cc-clr" data-ri="'+ST.sel+'" data-oi="'+oi+'">Clear</button>'
+   ?'<div style="display:flex;gap:5px;align-items:flex-start;"><textarea class="cc-ta" data-ri="'+ST.sel+'" data-oi="'+oi+'">'+esc(ct)+'</textarea><button class="cc-save" data-ri="'+ST.sel+'" data-oi="'+oi+'" title="Save">✓</button></div><button class="cc-clr" data-ri="'+ST.sel+'" data-oi="'+oi+'">Clear</button>'
    :'<div class="cc-val">'+esc(ct)+'</div>';
   return'<div class="cc'+(em?' dim':'')+(hl?' ohl':'')+'" style="'+bs+hs+'"><div class="cc-org" style="color:'+org.hx+'">'+esc(org.l)+'</div>'+valHtml+'</div>';
  }).join('');
  if(ST.edit){
   document.querySelectorAll('.cc-ta').forEach(function(ta){ta.addEventListener('blur',function(){saveContact(parseInt(ta.dataset.ri),parseInt(ta.dataset.oi),ta.value);});});
   document.querySelectorAll('.cc-clr').forEach(function(btn){btn.addEventListener('click',function(){clearContact(parseInt(btn.dataset.ri),parseInt(btn.dataset.oi));});});
+  document.querySelectorAll('.cc-save').forEach(function(btn){btn.addEventListener('click',function(){var ta=btn.closest('div').querySelector('.cc-ta');if(ta)saveContact(parseInt(btn.dataset.ri),parseInt(btn.dataset.oi),ta.value);});});
  }
  var oldPs=document.getElementById('pair-sect');if(oldPs)oldPs.remove();
  if(r.pairings!==undefined){document.getElementById('cards').insertAdjacentHTML('afterend',renderPairings(ST.sel));wirePairings(ST.sel);}
@@ -1440,6 +1445,14 @@ document.getElementById('act-btn').addEventListener('click',toggleAct);
 document.getElementById('name-ok').addEventListener('click',confirmName);
 document.getElementById('name-inp').addEventListener('keydown',function(ev){if(ev.key==='Enter')confirmName();});
 document.getElementById('done-btn').addEventListener('click',exitEdit);
+var _sab=document.getElementById('save-all-btn');
+if(_sab)_sab.addEventListener('click',function(){
+ document.querySelectorAll('.cc-ta').forEach(function(ta){
+  saveContact(parseInt(ta.dataset.ri),parseInt(ta.dataset.oi),ta.value);
+ });
+ toast('✓ All changes saved');
+});
+
 document.getElementById('name-cancel').addEventListener('click',function(){document.getElementById('name-bar').style.display='none';});
 
 
