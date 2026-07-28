@@ -13,11 +13,8 @@
 var DB=null,DB_ROOT="zip_abi2021";
 var EN=null,LE=null,LOG=[],ACT=false;
 try{
- var _c={apiKey:"PASTE_YOUR_API_KEY",authDomain:"PASTE_YOUR_PROJECT_ID.firebaseapp.com",
- databaseURL:"https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
- projectId:"PASTE_YOUR_PROJECT_ID",storageBucket:"PASTE_YOUR_PROJECT_ID.appspot.com",
- messagingSenderId:"PASTE_YOUR_SENDER_ID",appId:"PASTE_YOUR_APP_ID"};
- if(_c.apiKey.indexOf("PASTE")===-1){firebase.initializeApp(_c);DB=firebase.database();}
+ var _c={apiKey:"AIzaSyA5vn2xeRBtMx0cB_qkeLqp-cwF0Ofw6P8",authDomain:"zippering-plan-final.firebaseapp.com",databaseURL:"https://zippering-plan-final-default-rtdb.firebaseio.com",projectId:"zippering-plan-final",storageBucket:"zippering-plan-final.firebasestorage.app",messagingSenderId:"269262105441",appId:"1:269262105441:web:26c2885c7d5de818a4b320"};
+ try{if(_c.apiKey.indexOf('PASTE')===-1){firebase.initializeApp(_c);DB=firebase.database();}}catch(e){console.warn('Firebase:',e);}
 }catch(e){console.warn("Firebase:",e.message);}
 </script>
 <style>
@@ -491,7 +488,7 @@ var PT={
 
 var RL=[
  {n:'Development', c:0, o:{Crusoe:'Evan Schwimmer, Allie Stein',DPR:'John Arcello',MS:'Dillon Isaacs, Maria Diaz',SL:'Brian Walsh',REI:'John Messick'}},
- {n:'Precon manager', c:0, o:{Crusoe:'Mark Miller',DPR:'Caroline Schopp, Adrian Ayala',MS:'Muhammad Ahmad, Leslie Nichols-Rage',SL:'Michael Kimmel',REI:'Brett Strohlein'}},
+ {n:'Precon manager', c:0, o:{Crusoe:'Mark Millet',DPR:'Caroline Schopp, Adrian Ayala',MS:'Muhammad Ahmad, Leslie Nichols-Rage',SL:'Michael Kimmel',REI:'Brett Strohlein'}},
  {n:'PX', c:0,o:{Crusoe:'Neil Brown',DPR:'Nick Sultenfuss, Todd Whitehouse',MS:'Shaminder Banga, Hank Nacey, Greg Roberts, Matthew Knapp, Muhammad Ahmad, Joseph Kocienda',SL:'Matt Tieken',REI:'Jayson Nelson'},pairings:[
  {person:'Neil Brown',ptitle:'PX',scope:'Power Delivery',type:'OVR', a:'Neil Brown',aOrg:'Crusoe',b:'Michael McSchaefer, Dan Mercier',bOrg:'Crusoe',bRole:'Power delivery'},
  ]},
@@ -797,13 +794,13 @@ function showPairForm(ri){
 function savePairing(ri,pairing){
  if(!RL[ri].pairings)RL[ri].pairings=[];
  RL[ri].pairings.push(pairing);
- if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);saveToStorage();
  renderPanel();
 }
 function deletePairing(ri,pi){
  if(!RL[ri].pairings)return;
  RL[ri].pairings.splice(pi,1);
- if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);saveToStorage();
  renderPanel();
 }
 
@@ -904,13 +901,13 @@ function showPairForm(ri){
 function savePairing(ri,pairing){
  if(!RL[ri].pairings)RL[ri].pairings=[];
  RL[ri].pairings.push(pairing);
- if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);saveToStorage();
  renderPanel();
 }
 function deletePairing(ri,pi){
  if(!RL[ri].pairings)return;
  RL[ri].pairings.splice(pi,1);
- if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);
+ if(DB)DB.ref(DB_ROOT+'/pairings/'+ri).set(RL[ri].pairings);saveToStorage();
  renderPanel();
 }
 
@@ -963,7 +960,8 @@ function renderPanel(){
  document.getElementById('panel').style.display='block';placeBadge();setTimeout(updateBadge,50);
  setTimeout(function(){document.getElementById('panel').scrollIntoView({behavior:'smooth',block:'nearest'});},50);
 }
-function render(){applyMap();renderPanel();renderSearch();setTimeout(updateBadge,50);}
+var _firstRender=true;
+function render(){applyMap();if(_firstRender){loadFromStorage();_firstRender=false;}renderPanel();renderSearch();setTimeout(updateBadge,50);}
 function updateBadge(){
  var badge=document.getElementById('eagle5-badge');
  if(!badge)return;
@@ -1072,6 +1070,7 @@ function saveContact(ri,oi,val){
  var ac=document.getElementById('act-count');
  if(ac){ac.textContent=LOG.length;ac.style.display='inline';}
  if(ACT)renderLog();
+ saveToStorage();
  toast('✓ Saved — '+RL[ri].n+' · '+OR[oi].l);
  var le=document.getElementById('lastedit');
  if(le){le.style.display='block';le.textContent='Last edit by '+(EN||'Unknown')+' · '+RL[ri].n+' · '+OR[oi].l+' · just now';}
@@ -1100,6 +1099,24 @@ function renderLog(){
   var tstr=t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   return'<div class="al-row"><div class="al-dot"></div><span class="al-badge">'+esc(l.org)+'</span><span class="al-who">'+esc(l.by)+'</span> updated <strong>'+esc(l.role)+'</strong><div class="al-time">'+tstr+'</div></div>';
  }).join('');
+}
+
+function loadFromStorage(){
+ try{
+  var d=JSON.parse(localStorage.getItem('eagle5_abi2021')||'{}');
+  if(d.contacts){Object.keys(d.contacts).forEach(function(ri){if(RL[+ri])Object.keys(d.contacts[ri]).forEach(function(org){RL[+ri].o[org]=d.contacts[ri][org];});});}
+  if(d.pairings){Object.keys(d.pairings).forEach(function(ri){if(RL[+ri])RL[+ri].pairings=d.pairings[ri];});}
+  if(d.log&&d.log.length){LOG=d.log;var ac=document.getElementById('act-count');if(ac){ac.textContent=LOG.length;ac.style.display='inline';}}
+  if(d.lastedit){var le=document.getElementById('lastedit');if(le){le.style.display='block';le.textContent='Last edit by '+d.lastedit.by+' · '+d.lastedit.role+' · '+d.lastedit.org+' · '+new Date(d.lastedit.at).toLocaleString();}}
+ }catch(e){console.warn('Storage load:',e);}
+}
+
+function saveToStorage(){
+ try{
+  var contacts={};RL.forEach(function(r,ri){contacts[ri]={};OR.forEach(function(o){if(r.o[o.k]!==undefined)contacts[ri][o.k]=r.o[o.k];});});
+  var pairings={};RL.forEach(function(r,ri){if(r.pairings)pairings[ri]=r.pairings;});
+  localStorage.setItem('eagle5_abi2021',JSON.stringify({contacts:contacts,pairings:pairings,log:LOG.slice(0,100),lastedit:LE}));
+ }catch(e){console.warn('Storage save:',e);}
 }
 
 function renderScenDetail(scen){
@@ -1429,6 +1446,7 @@ document.getElementById('name-cancel').addEventListener('click',function(){docum
 
 
 document.getElementById('sc').addEventListener('click',function(){ST.q='';document.getElementById('si').value='';render();});
+document.getElementById('si').addEventListener('input',function(){ST.q=this.value;renderSearch();applyMap();});
 document.getElementById('ctr-node').addEventListener('click',resetAll);
 document.querySelectorAll('.ob').forEach(function(b){b.addEventListener('click',function(){ST.org=ST.org===b.dataset.k?null:b.dataset.k;ST.sel=null;render();setTimeout(updateBadge,50);});});
 document.querySelectorAll('.rg').forEach(function(g){g.style.cursor='pointer';g.addEventListener('click',function(){selR(parseInt(g.dataset.ri));});});
