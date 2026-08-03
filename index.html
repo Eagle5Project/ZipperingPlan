@@ -1453,6 +1453,7 @@ if(_sab)_sab.addEventListener('click',function(){
   saveContact(parseInt(ta.dataset.ri),parseInt(ta.dataset.oi),ta.value);
  });
  toast('✓ All changes saved');
+ exitEdit();
 });
 
 document.getElementById('name-cancel').addEventListener('click',function(){document.getElementById('name-bar').style.display='none';});
