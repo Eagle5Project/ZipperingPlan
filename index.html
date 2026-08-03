@@ -14,7 +14,9 @@ var DB=null,DB_ROOT="zip_abi2021";
 var EN=null,LE=null,LOG=[],ACT=false;
 try{
  var _c={apiKey:"AIzaSyA5vn2xeRBtMx0cB_qkeLqp-cwF0Ofw6P8",authDomain:"zippering-plan-final.firebaseapp.com",databaseURL:"https://zippering-plan-final-default-rtdb.firebaseio.com",projectId:"zippering-plan-final",storageBucket:"zippering-plan-final.firebasestorage.app",messagingSenderId:"269262105441",appId:"1:269262105441:web:26c2885c7d5de818a4b320"};
- try{if(_c.apiKey.indexOf('PASTE')===-1){firebase.initializeApp(_c);DB=firebase.database();}}catch(e){console.warn('Firebase:',e);}
+ document.addEventListener('DOMContentLoaded',function(){
+try{if(typeof firebase!=='undefined'&&_c.apiKey.indexOf('PASTE')===-1){firebase.initializeApp(_c);DB=firebase.database();console.log('Firebase connected ✓');}}catch(e){console.warn('Firebase:',e);}
+});
 }catch(e){console.warn("Firebase:",e.message);}
 </script>
 <style>
@@ -496,9 +498,9 @@ var RL=[
  {n:'PX', c:0,o:{Crusoe:'Neil Brown',DPR:'Nick Sultenfuss, Todd Whitehouse',MS:'Shaminder Banga, Hank Nacey, Greg Roberts, Matthew Knapp, Muhammad Ahmad, Joseph Kocienda',SL:'Matt Tieken',REI:'Jayson Nelson'},pairings:[
  {person:'Neil Brown',ptitle:'PX',scope:'Power Delivery',type:'OVR', a:'Neil Brown',aOrg:'Crusoe',b:'Michael McSchaefer, Dan Mercier',bOrg:'Crusoe',bRole:'Power delivery'},
  ]},
- {n:'Design lead', c:1, o:{Crusoe:'Ross Remesz',DPR:'Evan Winkler',MS:'Inna Tasmaly, Ashley Montufar',SL:'Thomas Cochran',REI:'Chris Drusch',AT:'Kate Gale'}},
+ {n:'Design lead', c:1, o:{Crusoe:'Ross Remesz',DPR:'Evan Winkler',MS:'Maria Diaz',SL:'Thomas Cochran',REI:'Chris Drusch',AT:'Kate Gale'}},
  {n:'Controls/SI',c:1,o:{Crusoe:'Adam Welles, Brett Hoggatt',DPR:'Kyle Alexander, Joe Arismendez',MS:'Klara Mekhael, Brandon Ferrier',SL:'Joe Spry',REI:'Chen Xing'}},
- {n:'Commissioning', c:1, o:{Crusoe:'Zack Pearson, Jose Fernandez Felgueroso',DPR:'Karina Hanyzewski, Joe Arismendez',MS:'Inna Tasmaly, Ashley Montufar',SL:'Matthew Weston, Colten Hoehns',REI:'Jon Engle'}},
+ {n:'Commissioning', c:1, o:{Crusoe:'Zack Pearson, Jose Fernandez Felgueroso',DPR:'Karina Hanyzewski, Joe Arismendez',MS:'Maria Diaz',SL:'Matthew Weston, Colten Hoehns',REI:'Jon Engle'}},
  {n:'CM team',c:2,o:{Crusoe:'Wayne Pykonen, Tom Pykonen, Hemanth Yerra, Abhi Tomar, Jake Howell, Tarun Alluri, Tyler Simpson',DPR:'Pete Stamos',MS:'Emilio Guzman',SL:'Travis Phillips',REI:'N/A'},pairings:[
  {person:'Tom Pykonen',ptitle:'CM',scope:'CSA', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Dane Armand, Jake Howell, Tarun Alluri',bOrg:'Crusoe',bRole:'CSA team'},
  {person:'Tom Pykonen',ptitle:'CM',scope:'Structural', type:'CSA', a:'Tom Pykonen',aOrg:'Crusoe',b:'Luke Dowdy', bOrg:'DPR', bRole:'CSA team'},
